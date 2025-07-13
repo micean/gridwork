@@ -1,0 +1,28 @@
+.adaptive-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 2px solid #999;
+
+  .table-cell {
+    border: 1px solid #e0e0e0;
+    padding: 0;
+    position: relative;
+    max-width: 400px;
+    height: 0px;
+    vertical-align: top;
+
+    @media (max-width: 768px) {
+      height: 80px;
+      font-size: 14px;
+    }
+
+    @media (max-width: 480px) {
+      height: 60px;
+      font-size: 12px;
+    }
+  }
+
+  .adaptive-table{
+    box-shadow: 3px 3px 0px #333;
+  }
+}
