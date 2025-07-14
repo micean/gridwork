@@ -19,3 +19,29 @@ export const createCellData = (): CellData => {
     text: '',
   }
 }
+export const lookupCellData = (gridData: CellData[][], parts: string | [number, number][]) => {
+  if(!parts.length){
+    return null
+  }
+  if (typeof parts === 'string') {
+    parts = parts.split('>').map((it) => JSON.parse(it))
+  }
+  return parts.reduce((acc, cur) => {
+    const [row, col] = cur
+    const it = acc.innerGrid![row][col]
+    return it
+  }, { text: '', innerGrid: gridData } as CellData)
+}
+export const lookupInnerGrid = (gridData: CellData[][], parts: string | [number, number][]) => {
+  if(!parts.length){
+    return gridData
+  }
+  if (typeof parts === 'string') {
+    parts = parts.split('>').map((it) => JSON.parse(it))
+  }
+  return parts.reduce((acc, cur) => {
+    const [row, col] = cur
+    const it = acc[row][col]
+    return it.innerGrid || []
+  }, gridData)
+}

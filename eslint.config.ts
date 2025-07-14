@@ -21,6 +21,13 @@ export default defineConfigWithVueTs(
   vueTsConfigs.recommended,
   
   {
+    name: 'app/custom-rules',
+    files: ['**/*.{ts,mts,tsx,vue}'],
+    rules: {
+      'vue/multi-word-component-names': 'off',
+    },
+  },
+  {
     ...pluginVitest.configs.recommended,
     files: ['src/**/__tests__/*'],
   },

@@ -3,5 +3,6 @@
 export interface CellData{
   id: string;
   text: string;
+  fontSize?: number;
   innerGrid?: CellData[][]
 }

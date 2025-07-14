@@ -1,14 +1,17 @@
 <script setup lang="ts">
 import TableComponent from './components/TableComponent.vue'
-import { createCellData, createGridData, createRowData } from '@/utils/data.ts'
+import Slider from './components/Slider.vue'
+import { createCellData, createGridData, createRowData, lookupCellData, lookupInnerGrid } from '@/utils/data.ts'
 import { ref } from 'vue'
 import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
 import type { CellData } from '../env'
 
 const vars = ref({
   gridData: createGridData(4, 4),
+  fontSize: 13,
 })
 const selectedCellsStore = useSelectedCellsStore()
+const showFontSizePopup = ref(false)
 
 const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
   if (selectedCellsStore.selectedCells.length !== 1) return
@@ -16,14 +19,7 @@ const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
   let originCellPath = selectedCellsStore.selectedCells[0]
   const parts = originCellPath.split('>').map((it) => JSON.parse(it))
   const [row, col] = parts.pop()
-  const parentGrid: CellData[][] = !parts.length
-    ? vars.value.gridData
-    : parts.reduce((acc, cur) => {
-        const [row, col] = cur
-        const it = acc[row][col]
-        return it.innerGrid || []
-      }, vars.value.gridData)
-
+  const parentGrid: CellData[][] = lookupInnerGrid(vars.value.gridData, parts)
 
   switch (edge) {
     case 'top':
@@ -55,81 +51,12 @@ const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
 const removeRowCol = (type: 'row' | 'col') => {
   if (!selectedCellsStore.selectedCells.length) return
 
-  // // 按网格分组处理选中单元格
-  // const gridGroups = new Map<string, { grid: CellData[][], rows: Set<number>, cols: Set<number> }>()
-  //
-  // // 遍历所有选中的单元格
-  // selectedCellsStore.selectedCells.forEach(cellPath => {
-  //   const parts = cellPath.split('>').map((it) => JSON.parse(it))
-  //   const [row, col] = parts.pop()
-  //
-  //   // 构建网格路径作为key
-  //   const gridKey = parts.length ? parts.join('>') : 'root'
-  //
-  //   // 获取或创建网格组
-  //   if (!gridGroups.has(gridKey)) {
-  //     const parentGrid: CellData[][] = !parts.length
-  //       ? vars.value.gridData
-  //       : parts.reduce((acc, cur) => {
-  //           const [r, c] = cur
-  //           const it = (acc.innerGrid || acc)[r][c]
-  //           return it.innerGrid
-  //         }, vars.value.gridData)
-  //
-  //     gridGroups.set(gridKey, {
-  //       grid: parentGrid,
-  //       rows: new Set<number>(),
-  //       cols: new Set<number>()
-  //     })
-  //   }
-  //
-  //   const group = gridGroups.get(gridKey)!
-  //   group.rows.add(row)
-  //   group.cols.add(col)
-  // })
-  //
-  // // 对每个网格执行删除操作
-  // gridGroups.forEach(({ grid, rows, cols }) => {
-  //   if (type === 'row') {
-  //     // 按行号降序排序，避免删除后索引变化
-  //     const sortedRows = Array.from(rows).sort((a, b) => b - a)
-  //
-  //     // 检查是否可以删除（至少保留1行）
-  //     if (grid.length - sortedRows.length >= 1) {
-  //       sortedRows.forEach(rowIndex => {
-  //         if (rowIndex < grid.length) {
-  //           grid.splice(rowIndex, 1)
-  //         }
-  //       })
-  //     }
-  //   } else if (type === 'col') {
-  //     // 按列号降序排序，避免删除后索引变化
-  //     const sortedCols = Array.from(cols).sort((a, b) => b - a)
-  //
-  //     // 检查是否可以删除（至少保留1列）
-  //     if (grid[0] && grid[0].length - sortedCols.length >= 1) {
-  //       sortedCols.forEach(colIndex => {
-  //         if (colIndex < grid[0].length) {
-  //           grid.forEach(row => {
-  //             row.splice(colIndex, 1)
-  //           })
-  //         }
-  //       })
-  //     }
-  //   }
-  // })
   const posArr = selectedCellsStore.selectedCells.map(path => {
     const parts: [number, number][] = path.split('>').map((it) => JSON.parse(it))
     const pos: [number, number] = parts.pop()!
     return { parts, pos }
   })
-  const parentGrid: CellData[][] = !posArr[0].parts.length
-    ? vars.value.gridData
-    : posArr[0].parts.reduce((acc, cur) => {
-      const [row, col] = cur
-      const it = acc[row][col]
-      return it.innerGrid || []
-    }, vars.value.gridData)
+  const parentGrid: CellData[][] = lookupInnerGrid(vars.value.gridData, posArr[0].parts)
 
   switch (type) {
     case 'row':
@@ -153,6 +80,23 @@ const removeRowCol = (type: 'row' | 'col') => {
 
   // 清除选中状态，因为删除后原位置可能不存在
   selectedCellsStore.clearSelection()
+}
+
+const toggleFontSizePopup = (event: Event) => {
+  if (selectedCellsStore.selectedCells.length) {
+    const firstCell = lookupCellData(vars.value.gridData, selectedCellsStore.selectedCells[0])
+    vars.value.fontSize = firstCell?.fontSize || 13
+    showFontSizePopup.value = !showFontSizePopup.value
+  }
+}
+
+const handleFontSizeChange = () => {
+  if (!selectedCellsStore.selectedCells.length) return
+  selectedCellsStore.selectedCells
+    .map(it => lookupCellData(vars.value.gridData, it)!)
+    .forEach(cell => {
+    cell.fontSize = vars.value.fontSize
+  })
 }
 </script>
 
@@ -201,6 +145,32 @@ const removeRowCol = (type: 'row' | 'col') => {
           :class="{ disabled: !selectedCellsStore.selectedCells.length}"
         >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 3C12.5523 3 13 3.44772 13 4L12.9998 11.9998C13.8355 11.372 14.8743 11 16 11C18.7614 11 21 13.2386 21 16C21 18.7614 18.7614 21 16 21C14.9681 21 14.0092 20.6874 13.2129 20.1518L13 20C13 20.5523 12.5523 21 12 21H6C5.44772 21 5 20.5523 5 20V4C5 3.44772 5.44772 3 6 3H12ZM11 5H7V19H11V5ZM19 15H13V17H19V15Z"></path></svg>
+        </i>
+        <i
+          title="字体大小"
+          @click="toggleFontSizePopup"
+          :class="{ disabled: !selectedCellsStore.selectedCells.length}"
+          style="position: relative;"
+          >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M11.246 15H4.75416L2.75416 20H0.600098L7.0001 4H9.0001L15.4001 20H13.246L11.246 15ZM10.446 13L8.0001 6.88516L5.55416 13H10.446ZM21.0001 12.5351V12H23.0001V20H21.0001V19.4649C20.4118 19.8052 19.7287 20 19.0001 20C16.791 20 15.0001 18.2091 15.0001 16C15.0001 13.7909 16.791 12 19.0001 12C19.7287 12 20.4118 12.1948 21.0001 12.5351ZM19.0001 18C20.1047 18 21.0001 17.1046 21.0001 16C21.0001 14.8954 20.1047 14 19.0001 14C17.8955 14 17.0001 14.8954 17.0001 16C17.0001 17.1046 17.8955 18 19.0001 18Z"></path></svg>
+          
+          <!-- 字体大小弹出层 -->
+          <div v-if="showFontSizePopup" class="font-size-popup" @click="e => e.stopPropagation()">
+            <div class="popup-content">
+              <div class="popup-body">
+                <Slider
+                  v-model="vars.fontSize"
+                  :min="13"
+                  :max="22"
+                  :step="1"
+                  :show-labels="true"
+                  :show-tooltip="true"
+                  :format="(value) => `${value}px`"
+                  @change="handleFontSizeChange"
+                />
+              </div>
+            </div>
+          </div>
         </i>
       </div>
     </header>

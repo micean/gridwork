@@ -2,8 +2,8 @@
   <div class="slider-container" :class="{ disabled: disabled }">
     <div class="slider-track" ref="trackRef" @click="handleTrackClick">
       <div class="slider-fill" :style="{ width: fillWidth }"></div>
-      <div 
-        class="slider-thumb" 
+      <div
+        class="slider-thumb"
         ref="thumbRef"
         :style="{ left: thumbPosition }"
         @mousedown="handleMouseDown"
@@ -18,7 +18,7 @@
     </div>
     <div class="slider-labels" v-if="showLabels">
       <span class="slider-min">{{ formatValue(min) }}</span>
-      <span class="slider-value">{{ formatValue(displayValue) }}</span>
+      <span class="slider-value"> </span>
       <span class="slider-max">{{ formatValue(max) }}</span>
     </div>
   </div>
@@ -28,7 +28,6 @@
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 
 interface Props {
-  modelValue: number
   min?: number
   max?: number
   step?: number
@@ -48,8 +47,9 @@ const props = withDefaults(defineProps<Props>(), {
   format: (value: number) => value.toString()
 })
 
+const modelValue = defineModel<number>({ default: 0 })
+
 const emit = defineEmits<{
-  'update:modelValue': [value: number]
   change: [value: number]
   input: [value: number]
 }>()
@@ -62,7 +62,7 @@ const trackWidth = ref(0)
 const trackLeft = ref(0)
 
 const normalizedValue = computed(() => {
-  return Math.max(props.min, Math.min(props.max, props.modelValue))
+  return Math.max(props.min, Math.min(props.max, modelValue.value))
 })
 
 const percentage = computed(() => {
@@ -81,7 +81,7 @@ const formatValue = (value: number) => {
   return props.format(value)
 }
 
-const updateValue = (clientX: number, emitChange = false) => {
+const updateValue = (clientX: number) => {
   if (!trackRef.value || props.disabled) return
 
   const rect = trackRef.value.getBoundingClientRect()
@@ -95,13 +95,11 @@ const updateValue = (clientX: number, emitChange = false) => {
   }
 
   newValue = Math.max(props.min, Math.min(props.max, newValue))
-  
-  if (newValue !== props.modelValue) {
-    emit('update:modelValue', newValue)
+
+  if (newValue !== modelValue.value) {
+    modelValue.value = newValue
     emit('input', newValue)
-    if (emitChange) {
-      emit('change', newValue)
-    }
+    emit('change', newValue)
   }
 }
 
@@ -129,12 +127,12 @@ const handleMouseLeave = () => {
 
 const handleMouseMove = (event: MouseEvent) => {
   if (!isDragging.value) return
-  updateValue(event.clientX, false)
+  updateValue(event.clientX)
 }
 
 const handleTouchMove = (event: TouchEvent) => {
   if (!isDragging.value) return
-  updateValue(event.touches[0].clientX, false)
+  updateValue(event.touches[0].clientX)
 }
 
 const handleMouseUp = () => {
@@ -145,7 +143,7 @@ const handleMouseUp = () => {
 
 const handleTrackClick = (event: MouseEvent) => {
   if (props.disabled) return
-  updateValue(event.clientX, true)
+  updateValue(event.clientX)
 }
 
 const updateTrackDimensions = () => {
@@ -177,7 +175,7 @@ onUnmounted(() => {
 <style scoped lang="scss">
 .slider-container {
   width: 100%;
-  padding: 20px 0;
+  padding-top: 20px;
   user-select: none;
 
   &.disabled {
@@ -272,7 +270,7 @@ onUnmounted(() => {
 @media (max-width: 768px) {
   .slider-container {
     padding: 15px 0;
-    
+
     .slider-thumb {
       width: 24px;
       height: 24px;
