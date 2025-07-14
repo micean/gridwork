@@ -20,6 +20,7 @@ const cols = computed(() => model.value[0]?.length || 0);
     <tr v-for="row in rows" :key="row">
       <td v-for="col in cols" :key="col" class="table-cell" >
         <CellContent
+          :key="model[row - 1][col - 1].id"
           v-model="model[row - 1][col - 1]"
           :path="`${props.parentPath ? props.parentPath + '>' : ''}[${row - 1},${col - 1}]`"
         />

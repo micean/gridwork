@@ -1,9 +1,9 @@
 <script setup lang="ts">
-import {computed, ref, useTemplateRef, onMounted, onUnmounted, nextTick} from "vue";
+import {computed, ref, useTemplateRef, onMounted, onUnmounted} from "vue";
 import type {CellData} from "../../env";
 import TableComponent from "@/components/TableComponent.vue";
 import {useSelectedCellsStore} from "@/stores/selectedCells.ts";
-import {selectionOnEnter, selectionOnTail} from "@/utils/edit.ts";
+import {selectionOnTail} from "@/utils/edit.ts";
 import {createGridData} from "@/utils/data.ts";
 import emitter from "@/utils/bus.ts";
 
@@ -141,6 +141,7 @@ const handleMouse = (event: Event, type: string) => {
 
 <template>
   <div
+    :id="model.id"
     :class="{'cell-content': true, 'focus': isCellSelected, 'non-top-bd': nonTopBorder, 'non-bottom-bd': nonBottomBorder, 'non-left-bd': nonLeftBorder, 'non-right-bd': nonRightBorder}"
     @mousedown="(e) => handleMouse(e, 'mousedown')"
     @mouseenter="(e) => handleMouse(e, 'mouseenter')">
