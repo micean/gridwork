@@ -36,6 +36,7 @@ const clearDocumentFocus = () => {
 
 export const useSelectedCellsStore = defineStore('selectedCells', () => {
   const selectedCells = ref<string[]>([])
+  const editingCell = ref<string | null>(null)
   const mouseCells = ref<{
     startCell?: string,
     endCell?: string,
@@ -113,11 +114,12 @@ export const useSelectedCellsStore = defineStore('selectedCells', () => {
   const startEdit = () => {
     if(selectedCells.value.length) {
       const path = selectedCells.value[0]
+      selectedCells.value.splice(1, selectedCells.value.length)
       emitter.emit('cell-focus', {path, startEdit: true})
     }
   }
 
-  const focusAnotherCell = (direction: 'up' | 'down' | 'left' | 'right') => {
+  const focusAnotherCell = (direction: 'up' | 'down' | 'left' | 'right', startEdit = false) => {
     if(selectedCells.value.length) {
       const posArr = selectedCells.value[0].split('>')
       const [row, col] = JSON.parse(posArr.pop() || '[-1,-1]')
@@ -125,16 +127,16 @@ export const useSelectedCellsStore = defineStore('selectedCells', () => {
       const prefix = posArr.length ? posArr.join('>') + '>' : ''
       switch(direction) {
         case 'up':
-          emitter.emit('cell-focus', {path: `${prefix}[${row - 1},${col}]`, startEdit: false})
+          emitter.emit('cell-focus', {path: `${prefix}[${row - 1},${col}]`, startEdit})
           break;
         case 'down':
-          emitter.emit('cell-focus', {path: `${prefix}[${row + 1},${col}]`, startEdit: false})
+          emitter.emit('cell-focus', {path: `${prefix}[${row + 1},${col}]`, startEdit})
           break;
         case 'left':
-          emitter.emit('cell-focus', {path: `${prefix}[${row},${col - 1}]`, startEdit: false})
+          emitter.emit('cell-focus', {path: `${prefix}[${row},${col - 1}]`, startEdit})
           break;
         case 'right':
-          emitter.emit('cell-focus', {path: `${prefix}[${row},${col + 1}]`, startEdit: false})
+          emitter.emit('cell-focus', {path: `${prefix}[${row},${col + 1}]`, startEdit})
           break;
       }
     }
@@ -172,8 +174,17 @@ export const useSelectedCellsStore = defineStore('selectedCells', () => {
     }
   }
 
+  const setEditingCell = (cell: string | null) => {
+    editingCell.value = cell
+  }
+
+  const isEditingCell = (cell: string) => {
+    return editingCell.value === cell
+  }
+
   return {
     selectedCells,
+    editingCell,
     addCellOnClick,
     removeCell,
     toggleCell,
@@ -186,6 +197,8 @@ export const useSelectedCellsStore = defineStore('selectedCells', () => {
     startEdit,
     focusAnotherCell,
     setMouseStartCell,
-    setMouseEndCell
+    setMouseEndCell,
+    setEditingCell,
+    isEditingCell,
   }
 })

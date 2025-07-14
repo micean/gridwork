@@ -1,6 +1,7 @@
 import Mousetrap from 'mousetrap';
 import {useSelectedCellsStore} from "@/stores/selectedCells.ts";
 import emitter from "@/utils/bus.ts";
+import {lookupCellData} from "@/utils/data.ts";
 
 
 export const registerKeys = () => {

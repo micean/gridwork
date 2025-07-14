@@ -33,7 +33,7 @@ const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
       break
     case 'left':
       parentGrid.forEach((eachRow) => {
-        eachRow.splice(col + 1, 0, createCellData())
+        eachRow.splice(col, 0, createCellData())
       })
       originCellPath = parts.length
         ? `${parts.join('>')}>[${row},${col + 1}]`
@@ -41,7 +41,7 @@ const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
       break
     case 'right':
       parentGrid.forEach((eachRow) => {
-        eachRow.splice(col, 0, createCellData())
+        eachRow.splice(col + 1, 0, createCellData())
       })
       break
   }
@@ -112,13 +112,6 @@ const handleFontSizeChange = () => {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M12 13C14.7614 13 17 15.2386 17 18C17 20.7614 14.7614 23 12 23C9.23858 23 7 20.7614 7 18C7 15.2386 9.23858 13 12 13ZM13 15H11V16.999L9 17V19L11 18.999V21H13V18.999L15 19V17L13 16.999V15ZM20 3C20.5523 3 21 3.44772 21 4V10C21 10.5523 20.5523 11 20 11H4C3.44772 11 3 10.5523 3 10V4C3 3.44772 3.44772 3 4 3H20ZM5 5V9H19V5H5Z"></path></svg>
         </i>
         <i
-          title="向右增加一列"
-          @click="addRowCol('right')"
-          :class="{ disabled: selectedCellsStore.selectedCells.length !== 1 }"
-          >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M10 3C10.5523 3 11 3.44772 11 4V20C11 20.5523 10.5523 21 10 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3H10ZM9 5H5V19H9V5ZM18 7C20.7614 7 23 9.23858 23 12C23 14.7614 20.7614 17 18 17C15.2386 17 13 14.7614 13 12C13 9.23858 15.2386 7 18 7ZM19 9H17V10.999L15 11V13L17 12.999V15H19V12.999L21 13V11L19 10.999V9Z"></path></svg>
-        </i>
-        <i
           title="向下增加一行"
           @click="addRowCol('bottom')"
           :class="{ disabled: selectedCellsStore.selectedCells.length !== 1 }"
@@ -129,8 +122,15 @@ const handleFontSizeChange = () => {
           title="向左增加一列"
           @click="addRowCol('left')"
           :class="{ disabled: selectedCellsStore.selectedCells.length !== 1 }"
-          >
+        >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M20 3C20.5523 3 21 3.44772 21 4V20C21 20.5523 20.5523 21 20 21H14C13.4477 21 13 20.5523 13 20V4C13 3.44772 13.4477 3 14 3H20ZM19 5H15V19H19V5ZM6 7C8.76142 7 11 9.23858 11 12C11 14.7614 8.76142 17 6 17C3.23858 17 1 14.7614 1 12C1 9.23858 3.23858 7 6 7ZM7 9H5V10.999L3 11V13L5 12.999V15H7V12.999L9 13V11L7 10.999V9Z"></path></svg>
+        </i>
+        <i
+          title="向右增加一列"
+          @click="addRowCol('right')"
+          :class="{ disabled: selectedCellsStore.selectedCells.length !== 1 }"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M10 3C10.5523 3 11 3.44772 11 4V20C11 20.5523 10.5523 21 10 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3H10ZM9 5H5V19H9V5ZM18 7C20.7614 7 23 9.23858 23 12C23 14.7614 20.7614 17 18 17C15.2386 17 13 14.7614 13 12C13 9.23858 15.2386 7 18 7ZM19 9H17V10.999L15 11V13L17 12.999V15H19V12.999L21 13V11L19 10.999V9Z"></path></svg>
         </i>
         <i
           title="删除行"
@@ -153,7 +153,7 @@ const handleFontSizeChange = () => {
           style="position: relative;"
           >
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M11.246 15H4.75416L2.75416 20H0.600098L7.0001 4H9.0001L15.4001 20H13.246L11.246 15ZM10.446 13L8.0001 6.88516L5.55416 13H10.446ZM21.0001 12.5351V12H23.0001V20H21.0001V19.4649C20.4118 19.8052 19.7287 20 19.0001 20C16.791 20 15.0001 18.2091 15.0001 16C15.0001 13.7909 16.791 12 19.0001 12C19.7287 12 20.4118 12.1948 21.0001 12.5351ZM19.0001 18C20.1047 18 21.0001 17.1046 21.0001 16C21.0001 14.8954 20.1047 14 19.0001 14C17.8955 14 17.0001 14.8954 17.0001 16C17.0001 17.1046 17.8955 18 19.0001 18Z"></path></svg>
-          
+
           <!-- 字体大小弹出层 -->
           <div v-if="showFontSizePopup" class="font-size-popup" @click="e => e.stopPropagation()">
             <div class="popup-content">
