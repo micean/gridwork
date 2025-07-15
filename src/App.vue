@@ -6,6 +6,7 @@ import { ref, onMounted, onUnmounted } from 'vue'
 import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
 import type { CellData } from '../env'
 import { pasteEventListener, copyEventListener } from '@/utils/clipboard.ts'
+import { wheelEventListener } from '@/keys.ts'
 
 const gridData = createGridData(4, 4)
 const vars = ref({
@@ -106,12 +107,15 @@ const handleFontSizeChange = () => {
 onMounted(() => {
   document.addEventListener('paste', pasteEventListener)
   document.addEventListener('copy', copyEventListener)
+  document.addEventListener('wheel', wheelEventListener)
 })
 
 onUnmounted(() => {
   document.removeEventListener('paste', pasteEventListener)
   document.removeEventListener('copy', copyEventListener)
+  document.removeEventListener('wheel', wheelEventListener)
 })
+
 </script>
 
 <template>

@@ -1,6 +1,7 @@
 import Mousetrap from 'mousetrap';
 import {useSelectedCellsStore} from "@/stores/selectedCells.ts";
 import emitter from "@/utils/bus.ts";
+import { lookupCellData } from '@/utils/data.ts'
 
 
 export const registerKeys = () => {
@@ -48,4 +49,23 @@ export const registerKeys = () => {
       emitter.emit('cell-inner', { path, gridPath: selectedCellsStore.selectedCells });
     }
   })
+}
+
+export const wheelEventListener = (event: WheelEvent) => {
+  const selectedCellsStore = useSelectedCellsStore();
+
+  if (event.shiftKey && selectedCellsStore.selectedCells.length > 0) {
+    event.preventDefault()
+
+    const delta = event.deltaY > 0 ? -1 : 1 // 向下滚动减小，向上滚动增大
+
+    selectedCellsStore.selectedCells.forEach(cellPath => {
+      const cell = lookupCellData(selectedCellsStore.gridData, cellPath)
+      if (cell) {
+        const currentFontSize = cell.fontSize || 13
+        const newFontSize = Math.max(13, Math.min(22, currentFontSize + delta))
+        cell.fontSize = newFontSize
+      }
+    })
+  }
 }
