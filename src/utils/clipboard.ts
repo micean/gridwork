@@ -1,5 +1,5 @@
 import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
-import { createCellData, createRowData, lookupCellData, lookupInnerGrid } from '@/utils/data.ts'
+import { createCellData, createRowData, lookupCellData, lookupInnerGrid, pickGridData } from '@/utils/data.ts'
 import type { CellData } from '../../env'
 
 export const pasteEventListener = async (event: ClipboardEvent) => {
@@ -120,5 +120,46 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
     }
   } catch (error) {
     console.error('无法读取剪贴板内容:', error)
+  }
+}
+
+export const copyEventListener = async (event: ClipboardEvent) => {
+  const selectedCellsStore = useSelectedCellsStore()
+
+  // 如果有单元格正在编辑，不处理复制事件
+  if (selectedCellsStore.editingCell || !selectedCellsStore.selectedCells.length) {
+    return
+  }
+
+  // 阻止默认复制行为
+  event.preventDefault()
+  try {
+    // 获取选中的单元格数据
+    const gridText: string[][] = pickGridData(selectedCellsStore.gridData, selectedCellsStore.selectedCells, false)
+      .map(it => it.map(cell => cell.text))
+
+    // 生成纯文本格式（制表符分隔）
+    const plainText = gridText.map(row => row.join('\t')).join('\n')
+
+    // 生成HTML表格格式
+    const htmlText = `
+      <table>
+        ${gridText.map(row =>
+          `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
+        ).join('')}
+      </table>
+    `.trim().replace(/\s+/g, ' ')
+
+    // 写入剪贴板
+    if (event.clipboardData) {
+      event.clipboardData.setData('text/plain', plainText)
+      event.clipboardData.setData('text/html', htmlText)
+    } else if (navigator.clipboard) {
+      await navigator.clipboard.writeText(plainText)
+    }
+
+    console.log('已复制到剪贴板:', plainText)
+  } catch (error) {
+    console.error('无法写入剪贴板内容:', error)
   }
 }

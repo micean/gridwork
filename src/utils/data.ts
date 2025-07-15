@@ -48,7 +48,7 @@ export const lookupInnerGrid = (gridData: CellData[][], parts: PathString | Path
     return it.innerGrid || []
   }, gridData)
 }
-export const pickGridData = (gridData: CellData[][], paths: PathString[] | PathNumber[]) => {
+export const pickGridData = (gridData: CellData[][], paths: PathString[] | PathNumber[], clipText = true) => {
   if(!paths.length){
     return []
   }
@@ -64,8 +64,10 @@ export const pickGridData = (gridData: CellData[][], paths: PathString[] | PathN
     const pos = it[it.length - 1]
     const cell = lookupCellData(gridData, it)!
     const data = JSON.parse(JSON.stringify(cell))
-    cell.text = ''
-    cell.innerGrid = undefined
+    if(clipText) {
+      cell.text = ''
+      cell.innerGrid = undefined
+    }
     return { pos, data }
   }).reduce((acc, cur) => {
     const [row, col] = cur.pos

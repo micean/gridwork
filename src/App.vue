@@ -5,7 +5,7 @@ import { createCellData, createGridData, createRowData, lookupCellData, lookupIn
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
 import type { CellData } from '../env'
-import { pasteEventListener } from '@/utils/clipboard.ts'
+import { pasteEventListener, copyEventListener } from '@/utils/clipboard.ts'
 
 const gridData = createGridData(4, 4)
 const vars = ref({
@@ -105,10 +105,12 @@ const handleFontSizeChange = () => {
 // 添加和移除粘贴事件监听
 onMounted(() => {
   document.addEventListener('paste', pasteEventListener)
+  document.addEventListener('copy', copyEventListener)
 })
 
 onUnmounted(() => {
   document.removeEventListener('paste', pasteEventListener)
+  document.removeEventListener('copy', copyEventListener)
 })
 </script>
 
