@@ -4,7 +4,7 @@ import type { CellData } from '../../env'
 import TableComponent from '@/components/TableComponent.vue'
 import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
 import {isCursorAtHead, isCursorAtTail, selectionOnTail} from '@/utils/edit.ts'
-import { createGridData } from '@/utils/data.ts'
+import { createGridData, pickGridData } from '@/utils/data.ts'
 import emitter from '@/utils/bus.ts'
 
 interface Props {
@@ -30,7 +30,7 @@ const isEditing = computed(() => {
   return selectedCellsStore.isEditingCell(props.path)
 })
 
-watch(() => model.value.text, (newText) => {
+watch(() => model.value.text, (newText, oldText) => {
   if(!isEditing.value && newText !== vars.value.content) {
     vars.value.content = newText
     console.log(model.value.text, vars.value.content)
@@ -75,6 +75,7 @@ const handleInput = (event: Event) => {
 const handleBlur = () => {
   window.getSelection()?.removeAllRanges()
   selectedCellsStore.setEditingCell(null)
+  vars.value.content = model.value.text
 }
 
 const handleEsc = (event: Event) => {
@@ -147,7 +148,7 @@ const handleCellFocusByKey = (event: { path: string; startEdit?: boolean }) => {
     if (event.startEdit && !isEditing.value) {
       nextTick(() => {
         selectedCellsStore.setEditingCell(props.path)
-        cellInput.value && selectionOnTail(cellInput.value)
+        if(cellInput.value) selectionOnTail(cellInput.value)
       })
     }
   }
@@ -160,10 +161,10 @@ const handlePressDelete = (event: { path: string }) => {
     cellInput.value!.textContent = ''
   }
 }
-const handlePressInsert = (event: { path: string }) => {
+const handlePressInsert = (event: { path: string, gridPath?: string[] }) => {
   if (event.path === props.path) {
     if (!model.value.innerGrid) {
-      model.value.innerGrid = createGridData(1, 1)
+      model.value.innerGrid = event.gridPath ? pickGridData(selectedCellsStore.gridData, event.gridPath) : createGridData(1, 1)
     }
     selectedCellsStore.addCellOnClick(props.path + '>[0,0]')
   }

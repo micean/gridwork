@@ -1,6 +1,9 @@
 import type {CellData} from "../../env";
 import { customAlphabet } from 'nanoid'
 
+type PathString = string // format like: [0,1]>[2,3]>[4,5]
+type PathNumber = [number, number][]
+
 export const nanoid = customAlphabet('abcdefghijklmnopqrstuvwxyz', 8)
 
 export const createGridData = (rows: number, cols: number): CellData[][] => {
@@ -19,7 +22,7 @@ export const createCellData = (): CellData => {
     text: '',
   }
 }
-export const lookupCellData = (gridData: CellData[][], parts: string | [number, number][]) => {
+export const lookupCellData = (gridData: CellData[][], parts: PathString | PathNumber) => {
   if(!parts.length){
     return null
   }
@@ -32,7 +35,7 @@ export const lookupCellData = (gridData: CellData[][], parts: string | [number, 
     return it
   }, { text: '', innerGrid: gridData } as CellData)
 }
-export const lookupInnerGrid = (gridData: CellData[][], parts: string | [number, number][]) => {
+export const lookupInnerGrid = (gridData: CellData[][], parts: PathString | PathNumber) => {
   if(!parts.length){
     return gridData
   }
@@ -44,4 +47,34 @@ export const lookupInnerGrid = (gridData: CellData[][], parts: string | [number,
     const it = acc[row][col]
     return it.innerGrid || []
   }, gridData)
+}
+export const pickGridData = (gridData: CellData[][], paths: PathString[] | PathNumber[]) => {
+  if(!paths.length){
+    return []
+  }
+  if(!gridData.length){
+    return []
+  }
+  return paths.map((it) => {
+    if(typeof it === 'string'){
+      return it.split('>').map((it2) => JSON.parse(it2) as [number, number])
+    }
+    return it
+  }).map(it => {
+    const pos = it[it.length - 1]
+    const cell = lookupCellData(gridData, it)!
+    const data = JSON.parse(JSON.stringify(cell))
+    cell.text = ''
+    cell.innerGrid = undefined
+    return { pos, data }
+  }).reduce((acc, cur) => {
+    const [row, col] = cur.pos
+    acc[row] = acc[row] || []
+    acc[row][col] = JSON.parse(JSON.stringify(cur.data))
+    return acc
+  }, [] as CellData[][]).filter(it =>
+    it && it.length
+  ).map(it => {
+    return it.filter(Boolean)
+  })
 }

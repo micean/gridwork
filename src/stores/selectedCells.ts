@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import emitter from "@/utils/bus.ts";
+import type { CellData } from '../../env'
 
 const compareCellPath = (startCellParts: string[], endCellParts: string[], length: number) => {
   if(length === 1) return length;
@@ -31,10 +32,14 @@ const thoughtCells = (startCell?: string, endCell?: string): string[] => {
   return cells.map(it => startCellParts.slice(0, index).concat([it]).join('>'))
 }
 const clearDocumentFocus = () => {
-  document.activeElement && (document.activeElement as HTMLElement).blur();
+  if(document.activeElement){
+    const activeElement = document.activeElement as HTMLElement
+    activeElement.blur()
+  }
 }
 
 export const useSelectedCellsStore = defineStore('selectedCells', () => {
+  const gridData = ref<CellData[][]>([])
   const selectedCells = ref<string[]>([])
   const editingCell = ref<string | null>(null)
   const mouseCells = ref<{
@@ -43,6 +48,10 @@ export const useSelectedCellsStore = defineStore('selectedCells', () => {
     mouseupEvent?: () => void
     oldSelectedCells?: string[]
   }>({})
+
+  const setupGrid = (data: CellData[][]) => {
+    gridData.value = data
+  }
 
   const addCellOnClick = (cell: string) => {
     if (isCellSelected(cell) && selectedCells.value.length === 1) {
@@ -183,8 +192,10 @@ export const useSelectedCellsStore = defineStore('selectedCells', () => {
   }
 
   return {
+    gridData,
     selectedCells,
     editingCell,
+    setupGrid,
     addCellOnClick,
     removeCell,
     toggleCell,

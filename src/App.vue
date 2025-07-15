@@ -6,12 +6,14 @@ import { ref } from 'vue'
 import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
 import type { CellData } from '../env'
 
+const gridData = createGridData(4, 4)
 const vars = ref({
-  gridData: createGridData(4, 4),
+  showFontSizePopup: false,
   fontSize: 13,
 })
 const selectedCellsStore = useSelectedCellsStore()
-const showFontSizePopup = ref(false)
+selectedCellsStore.setupGrid(gridData)
+
 
 const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
   if (selectedCellsStore.selectedCells.length !== 1) return
@@ -19,7 +21,7 @@ const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
   let originCellPath = selectedCellsStore.selectedCells[0]
   const parts = originCellPath.split('>').map((it) => JSON.parse(it))
   const [row, col] = parts.pop()
-  const parentGrid: CellData[][] = lookupInnerGrid(vars.value.gridData, parts)
+  const parentGrid: CellData[][] = lookupInnerGrid(selectedCellsStore.gridData, parts)
 
   switch (edge) {
     case 'top':
@@ -56,7 +58,7 @@ const removeRowCol = (type: 'row' | 'col') => {
     const pos: [number, number] = parts.pop()!
     return { parts, pos }
   })
-  const parentGrid: CellData[][] = lookupInnerGrid(vars.value.gridData, posArr[0].parts)
+  const parentGrid: CellData[][] = lookupInnerGrid(selectedCellsStore.gridData, posArr[0].parts)
 
   switch (type) {
     case 'row':
@@ -82,18 +84,18 @@ const removeRowCol = (type: 'row' | 'col') => {
   selectedCellsStore.clearSelection()
 }
 
-const toggleFontSizePopup = (event: Event) => {
+const toggleFontSizePopup = () => {
   if (selectedCellsStore.selectedCells.length) {
-    const firstCell = lookupCellData(vars.value.gridData, selectedCellsStore.selectedCells[0])
+    const firstCell = lookupCellData(selectedCellsStore.gridData, selectedCellsStore.selectedCells[0])
     vars.value.fontSize = firstCell?.fontSize || 13
-    showFontSizePopup.value = !showFontSizePopup.value
+    vars.value.showFontSizePopup = !vars.value.showFontSizePopup
   }
 }
 
 const handleFontSizeChange = () => {
   if (!selectedCellsStore.selectedCells.length) return
   selectedCellsStore.selectedCells
-    .map(it => lookupCellData(vars.value.gridData, it)!)
+    .map(it => lookupCellData(selectedCellsStore.gridData, it)!)
     .forEach(cell => {
     cell.fontSize = vars.value.fontSize
   })
@@ -155,7 +157,7 @@ const handleFontSizeChange = () => {
           <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M11.246 15H4.75416L2.75416 20H0.600098L7.0001 4H9.0001L15.4001 20H13.246L11.246 15ZM10.446 13L8.0001 6.88516L5.55416 13H10.446ZM21.0001 12.5351V12H23.0001V20H21.0001V19.4649C20.4118 19.8052 19.7287 20 19.0001 20C16.791 20 15.0001 18.2091 15.0001 16C15.0001 13.7909 16.791 12 19.0001 12C19.7287 12 20.4118 12.1948 21.0001 12.5351ZM19.0001 18C20.1047 18 21.0001 17.1046 21.0001 16C21.0001 14.8954 20.1047 14 19.0001 14C17.8955 14 17.0001 14.8954 17.0001 16C17.0001 17.1046 17.8955 18 19.0001 18Z"></path></svg>
 
           <!-- 字体大小弹出层 -->
-          <div v-if="showFontSizePopup" class="font-size-popup" @click="e => e.stopPropagation()">
+          <div v-if="vars.showFontSizePopup" class="font-size-popup" @click="e => e.stopPropagation()">
             <div class="popup-content">
               <div class="popup-body">
                 <Slider
@@ -176,7 +178,7 @@ const handleFontSizeChange = () => {
     </header>
     <main class="editor-area">
       <div class="editor-content">
-        <TableComponent v-model="vars.gridData" />
+        <TableComponent v-model="selectedCellsStore.gridData" />
       </div>
     </main>
   </div>

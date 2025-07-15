@@ -1,7 +1,8 @@
 import Mousetrap from 'mousetrap';
 import {useSelectedCellsStore} from "@/stores/selectedCells.ts";
 import emitter from "@/utils/bus.ts";
-import {lookupCellData} from "@/utils/data.ts";
+import { lookupCellData, pickGridData } from '@/utils/data.ts'
+import type { CellData } from '../env'
 
 
 export const registerKeys = () => {
@@ -36,9 +37,17 @@ export const registerKeys = () => {
       emitter.emit('cell-delete', { path });
     })
   })
-  Mousetrap.bind('ins', () => {
-    selectedCellsStore.selectedCells.forEach(path => {
+  Mousetrap.bind('ins', (event) => {
+    if(selectedCellsStore.selectedCells.length === 1) {
+      event.preventDefault();
+      event.stopPropagation();
+      const path = selectedCellsStore.selectedCells[0];
       emitter.emit('cell-inner', { path });
-    })
+    }else if(selectedCellsStore.selectedCells.length > 1){
+      event.preventDefault();
+      event.stopPropagation();
+      const path = selectedCellsStore.selectedCells[0];
+      emitter.emit('cell-inner', { path, gridPath: selectedCellsStore.selectedCells });
+    }
   })
 }
