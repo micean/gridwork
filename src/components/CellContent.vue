@@ -209,6 +209,9 @@ const handleMouse = (event: Event, type: string) => {
       'non-left-bd': nonLeftBorder,
       'non-right-bd': nonRightBorder,
     }"
+    :style="{
+      'background-color': model.backgroundColor,
+    }"
     @mousedown="(e) => handleMouse(e, 'mousedown')"
     @mouseenter="(e) => handleMouse(e, 'mouseenter')"
   >
@@ -216,7 +219,9 @@ const handleMouse = (event: Event, type: string) => {
       ref="cellInput"
       :class="['cell-input', { editing: isEditing }]"
       :contenteditable="isCellSelected"
-      :style="{ 'font-size': model.fontSize ? model.fontSize + 'px' : '13px' }"
+      :style="{
+        'font-size': model.fontSize ? model.fontSize + 'px' : '13px',
+      }"
       @input="handleInput"
       @blur="handleBlur"
       @keydown.esc="handleEsc"

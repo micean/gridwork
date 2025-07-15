@@ -67,6 +67,8 @@ export const pickGridData = (gridData: CellData[][], paths: PathString[] | PathN
     if(clipText) {
       cell.text = ''
       cell.innerGrid = undefined
+      cell.fontSize = undefined
+      cell.backgroundColor = undefined
     }
     return { pos, data }
   }).reduce((acc, cur) => {
