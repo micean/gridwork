@@ -30,7 +30,7 @@ const isEditing = computed(() => {
   return selectedCellsStore.isEditingCell(props.path)
 })
 
-watch(() => model.value.text, (newText, oldText) => {
+watch(() => model.value.text, (newText) => {
   if(!isEditing.value && newText !== vars.value.content) {
     vars.value.content = newText
     console.log(model.value.text, vars.value.content)

@@ -2,9 +2,10 @@
 import TableComponent from './components/TableComponent.vue'
 import Slider from './components/Slider.vue'
 import { createCellData, createGridData, createRowData, lookupCellData, lookupInnerGrid } from '@/utils/data.ts'
-import { ref } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
 import type { CellData } from '../env'
+import { pasteEventListener } from '@/utils/clipboard.ts'
 
 const gridData = createGridData(4, 4)
 const vars = ref({
@@ -100,6 +101,15 @@ const handleFontSizeChange = () => {
     cell.fontSize = vars.value.fontSize
   })
 }
+
+// 添加和移除粘贴事件监听
+onMounted(() => {
+  document.addEventListener('paste', pasteEventListener)
+})
+
+onUnmounted(() => {
+  document.removeEventListener('paste', pasteEventListener)
+})
 </script>
 
 <template>
