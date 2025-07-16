@@ -9,13 +9,13 @@ import {
   lookupCellData,
   lookupInnerGrid,
 } from '@/utils/data.ts'
-import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
-import {useSelectedCellsStore} from '@/stores/selectedCells.ts'
-import {useHistoryStore} from '@/stores/history.ts'
-import {useSearchStore} from '@/stores/search.ts'
-import type {CellData} from '../env'
-import {copyEventListener, cutEventListener, pasteEventListener} from '@/utils/clipboard.ts'
-import {wheelEventListener} from '@/keys.ts'
+import { computed, nextTick, onMounted, onUnmounted, ref, watch } from 'vue'
+import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
+import { useHistoryStore } from '@/stores/history.ts'
+import { useSearchStore } from '@/stores/search.ts'
+import type { CellData } from '../env'
+import { copyEventListener, cutEventListener, pasteEventListener } from '@/utils/clipboard.ts'
+import { wheelEventListener } from '@/keys.ts'
 import emitter from '@/utils/bus.ts'
 
 const gridData = createGridData(4, 4)
@@ -48,16 +48,13 @@ watch(
 watch(
   () => vars.value.showSearchPopup,
   (newData) => {
-    if(newData){
-      selectedCellsStore.clearSelection();
-    }
-    searchStore.setSearchVisible(newData);
+    searchStore.setSearchVisible(newData)
   },
 )
 watch(
   () => vars.value.searchQuery,
   (newText) => {
-    searchStore.setSearchQuery(newText);
+    searchStore.setSearchQuery(newText)
   },
 )
 
@@ -265,6 +262,17 @@ const handleRedo = () => {
 // 添加和移除事件监听
 const handleClickOutside = (event: Event) => {
   const target = event.target as HTMLElement
+
+  // 检查点击是否在.editor-content内
+  const isInsideEditorContent = target.closest('.editor-content')
+
+  // 如果点击在.editor-content外，清除选定和编辑状态
+  if (!isInsideEditorContent) {
+    selectedCellsStore.clearSelection()
+    selectedCellsStore.setEditingCell(null)
+  }
+
+  // 原有的弹窗关闭逻辑
   if (!target.closest('.color-popup') && !target.closest('[title="颜色"]')) {
     vars.value.showColorPopup = false
   }
@@ -287,7 +295,6 @@ onMounted(() => {
   document.addEventListener('copy', copyEventListener)
   document.addEventListener('cut', cutEventListener)
   document.addEventListener('wheel', wheelEventListener)
-  document.addEventListener('click', handleClickOutside)
   window.addEventListener('editor-blur', handleEditorBlur as EventListener)
   document.addEventListener('keydown', (e) => {
     if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
@@ -302,7 +309,6 @@ onUnmounted(() => {
   document.removeEventListener('copy', copyEventListener)
   document.removeEventListener('cut', cutEventListener)
   document.removeEventListener('wheel', wheelEventListener)
-  document.removeEventListener('click', handleClickOutside)
   window.removeEventListener('editor-blur', handleEditorBlur as EventListener)
 })
 </script>
@@ -539,6 +545,7 @@ onUnmounted(() => {
                     type="text"
                     class="search-input"
                     placeholder="搜索..."
+                    @focus="() =>selectedCellsStore.clearSelection()"
                     @keyup.esc="toggleSearchPopup"
                     @keyup.enter="toggleSearchPopup"
                   />
@@ -592,7 +599,7 @@ onUnmounted(() => {
         </i>
       </div>
     </header>
-    <main class="editor-area">
+    <main class="editor-area" @click="handleClickOutside">
       <div class="editor-content">
         <TableComponent v-model="selectedCellsStore.gridData" />
       </div>
