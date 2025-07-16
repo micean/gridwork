@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
 import emitter from "@/utils/bus.ts";
 import type { CellData } from '../../env'
 
@@ -191,6 +191,15 @@ export const useSelectedCellsStore = defineStore('selectedCells', () => {
     return editingCell.value === cell
   }
 
+  const countSelectedRowColSize = () => {
+    const posArr: [number, number][] = selectedCells.value
+      .map(it => it.split('>').pop()!)
+      .map(it => JSON.parse(it) as [number, number])
+    const rowSize = posArr.map(it => it[0]).filter((e, i, self) => i === self.indexOf(e)).length;
+    const colSize = posArr.map(it => it[1]).filter((e, i, self) => i === self.indexOf(e)).length;
+    return [rowSize, colSize]
+  }
+
   return {
     gridData,
     selectedCells,
@@ -211,5 +220,6 @@ export const useSelectedCellsStore = defineStore('selectedCells', () => {
     setMouseEndCell,
     setEditingCell,
     isEditingCell,
+    countSelectedRowColSize,
   }
 })

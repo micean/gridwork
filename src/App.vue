@@ -9,7 +9,7 @@ import {
   lookupCellData,
   lookupInnerGrid,
 } from '@/utils/data.ts'
-import { ref, onMounted, onUnmounted, watch } from 'vue'
+import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
 import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
 import { useHistoryStore } from '@/stores/history.ts'
 import type { CellData } from '../env'
@@ -40,6 +40,11 @@ watch(
   },
   { deep: true }
 )
+
+const summable = computed(() => {
+  const [rowSize, colSize] = selectedCellsStore.countSelectedRowColSize();
+  return (rowSize === 1 && colSize > 2) || (rowSize > 2 && colSize === 1)
+})
 
 const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
   if (selectedCellsStore.selectedCells.length !== 1) return
@@ -155,6 +160,15 @@ const handleColorSelect = (color: string) => {
 
   // 选择颜色后关闭弹窗
   vars.value.showColorPopup = false
+}
+
+const handleSummation = () => {
+  if (!summable.value) return
+
+  const cells =  selectedCellsStore.selectedCells.map((it) => lookupCellData(selectedCellsStore.gridData, it)!);
+  const lastCell = cells.pop()!;
+  const sum = cells.map(it => it.text).filter(it => !it || /^\-?\d+(\.\d+)?$/.test(it)).map(it => Number(it || 0)).reduce((a, b) => a + b, 0);
+  lastCell.text = sum.toString();
 }
 
 const handleUndo = () => {
@@ -374,6 +388,12 @@ onUnmounted(() => {
             v-model="vars.showColorPopup"
             @select-color="handleColorSelect"
           />
+        </i>
+        <i
+          title="求和"
+          @click="handleSummation"
+          :class="{ disabled: !summable }">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M5 18L12.6796 12L5 6V4H19V6H8.26348L16 12L8.26348 18H19V20H5V18Z"></path></svg>
         </i>
         <i
           title="撤消"
