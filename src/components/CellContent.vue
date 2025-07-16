@@ -212,6 +212,7 @@ const handleMouse = (event: Event, type: string) => {
     }"
     :style="{
       'background-color': model.backgroundColor,
+      'flex-direction': model.flexDirection,
     }"
     @mousedown="(e) => handleMouse(e, 'mousedown')"
     @mouseenter="(e) => handleMouse(e, 'mouseenter')"
@@ -222,6 +223,9 @@ const handleMouse = (event: Event, type: string) => {
       :contenteditable="isCellSelected"
       :style="{
         'font-size': model.fontSize ? model.fontSize + 'px' : '13px',
+        'max-width': model.flexDirection === 'row' && model.innerGrid ? '400px' : undefined,
+        'display': model.flexDirection === 'row' && model.innerGrid ? 'flex' : undefined,
+        'align-items': model.flexDirection === 'row' && model.innerGrid ? 'center' : undefined,
       }"
       @input="handleInput"
       @blur="handleBlur"

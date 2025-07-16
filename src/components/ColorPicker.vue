@@ -1,6 +1,6 @@
 <script setup lang="ts">
 
-const backgroundColors = ['#FFFFFF', '#FF5845', '#FF894F', '#FF6196', '#F3E733', '#38B0F1', '#75B175']
+const backgroundColors = ['#FFFFFF', '#f9f9f0', '#F3E733', '#FF894F', '#FF8080', '#FF6196', '#38B0F1', '#75B175']
 
 interface Emits {
   (e: 'selectColor', color: string): void
@@ -50,7 +50,7 @@ const handleClickOutside = (event: Event) => {
     background-color: white;
     border-radius: 8px;
     box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-    width: 180px;
+    width: 194px;
     max-width: 90vw;
     padding: 12px;
 
@@ -70,7 +70,7 @@ const handleClickOutside = (event: Event) => {
 
       .color-grid {
         display: grid;
-        grid-template-columns: repeat(7, 1fr);
+        grid-template-columns: repeat(8, 1fr);
         gap: 4px;
 
         .color-item {
