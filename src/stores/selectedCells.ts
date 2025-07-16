@@ -130,7 +130,12 @@ export const useSelectedCellsStore = defineStore('selectedCells', () => {
 
   const focusAnotherCell = (direction: 'up' | 'down' | 'left' | 'right', startEdit = false) => {
     if(selectedCells.value.length) {
-      const posArr = selectedCells.value[0].split('>')
+      const firstCell = selectedCells.value[0]
+      const signCell = ['up', 'left'].includes(direction) ? firstCell :
+        'right' === direction ? selectedCells.value.filter(it => JSON.parse(it.split('>').pop()!)[0] === JSON.parse(firstCell.split('>').pop()!)[0]).pop()! :
+        'down' === direction ? selectedCells.value.filter(it => JSON.parse(it.split('>').pop()!)[1] === JSON.parse(firstCell.split('>').pop()!)[1]).pop()! :
+          firstCell
+      const posArr = signCell.split('>')
       const [row, col] = JSON.parse(posArr.pop() || '[-1,-1]')
       if(row === -1 || col === -1) return
       const prefix = posArr.length ? posArr.join('>') + '>' : ''

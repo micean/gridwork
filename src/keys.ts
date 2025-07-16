@@ -2,7 +2,7 @@ import Mousetrap from 'mousetrap';
 import {useSelectedCellsStore} from "@/stores/selectedCells.ts";
 import {useHistoryStore} from "@/stores/history.ts";
 import emitter from "@/utils/bus.ts";
-import { lookupCellData } from '@/utils/data.ts'
+import {lookupCellData, lookupInnerGrid} from '@/utils/data.ts'
 
 
 export const registerKeys = () => {
@@ -76,6 +76,20 @@ export const registerKeys = () => {
       }
     }
   });
+
+  Mousetrap.bind('ctrl+a', (event) => {
+    event.preventDefault();
+    event.stopPropagation();
+    if(!selectedCellsStore.selectedCells.length || !selectedCellsStore.selectedCells[0].includes('>')){
+      const cells = selectedCellsStore.gridData.flatMap((row, rowIdx) => row.map((cell, colIdx) => `[${rowIdx},${colIdx}]`));
+      selectedCellsStore.setSelectedCells(cells);
+    }else{
+      const parentPath = selectedCellsStore.selectedCells[0].substring(0, selectedCellsStore.selectedCells[0].indexOf('>'));
+      const gridData = lookupCellData(selectedCellsStore.gridData, parentPath);
+      const cells = gridData?.innerGrid?.flatMap((row, rowIdx) => row.map((cell, colIdx) => `${parentPath}>[${rowIdx},${colIdx}]`));
+      selectedCellsStore.setSelectedCells(cells || []);
+    }
+  })
 }
 
 export const wheelEventListener = (event: WheelEvent) => {
