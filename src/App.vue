@@ -15,6 +15,7 @@ import { useHistoryStore } from '@/stores/history.ts'
 import type { CellData } from '../env'
 import { pasteEventListener, copyEventListener, cutEventListener } from '@/utils/clipboard.ts'
 import { wheelEventListener } from '@/keys.ts'
+import emitter from '@/utils/bus.ts'
 
 const gridData = createGridData(4, 4)
 const vars = ref({
@@ -89,6 +90,7 @@ const removeRowCol = (type: 'row' | 'col') => {
     const pos: [number, number] = parts.pop()!
     return { parts, pos }
   })
+  const parentCell = posArr[0].parts.length ? lookupCellData(selectedCellsStore.gridData, posArr[0].parts) : undefined;
   const parentGrid: CellData[][] = lookupInnerGrid(selectedCellsStore.gridData, posArr[0].parts)
 
   switch (type) {
@@ -101,7 +103,11 @@ const removeRowCol = (type: 'row' | 'col') => {
           parentGrid.splice(row - index, 1)
         })
       if (parentGrid.length === 0) {
-        parentGrid.push(createRowData(1))
+        if(parentCell){
+          parentCell.innerGrid = undefined
+        }else{
+          parentGrid.push(createRowData(1))
+        }
       }
       break
     case 'col':
@@ -113,14 +119,29 @@ const removeRowCol = (type: 'row' | 'col') => {
           parentGrid.forEach((row) => row.splice(col - index, 1))
         })
       if (parentGrid[0]?.length === 0) {
-        parentGrid.splice(0, parentGrid.length)
-        parentGrid.push(createRowData(1))
+        if(parentCell){
+          parentCell.innerGrid = undefined
+        }else{
+          parentGrid.splice(0, parentGrid.length)
+          parentGrid.push(createRowData(1))
+        }
       }
       break
   }
 
   // 清除选中状态，因为删除后原位置可能不存在
   selectedCellsStore.clearSelection()
+}
+
+const insertChild = () => {
+  if (!selectedCellsStore.selectedCells.length) return
+  if(selectedCellsStore.selectedCells.length === 1) {
+    const path = selectedCellsStore.selectedCells[0];
+    emitter.emit('cell-inner', { path });
+  }else if(selectedCellsStore.selectedCells.length > 1){
+    const path = selectedCellsStore.selectedCells[0];
+    emitter.emit('cell-inner', { path, gridPath: selectedCellsStore.selectedCells });
+  }
 }
 
 const toggleFontSizePopup = () => {
@@ -325,6 +346,12 @@ onUnmounted(() => {
               d="M12 3C12.5523 3 13 3.44772 13 4L12.9998 11.9998C13.8355 11.372 14.8743 11 16 11C18.7614 11 21 13.2386 21 16C21 18.7614 18.7614 21 16 21C14.9681 21 14.0092 20.6874 13.2129 20.1518L13 20C13 20.5523 12.5523 21 12 21H6C5.44772 21 5 20.5523 5 20V4C5 3.44772 5.44772 3 6 3H12ZM11 5H7V19H11V5ZM19 15H13V17H19V15Z"
             ></path>
           </svg>
+        </i>
+        <i
+          title="插入子级"
+          @click="insertChild"
+          :class="{ disabled: !selectedCellsStore.selectedCells.length }">
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21 3C21.5523 3 22 3.44772 22 4V11H20V5H4V19H10V21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3H21ZM21 13C21.5523 13 22 13.4477 22 14V20C22 20.5523 21.5523 21 21 21H13C12.4477 21 12 20.5523 12 20V14C12 13.4477 12.4477 13 13 13H21ZM20 15H14V19H20V15Z"></path></svg>
         </i>
         <i
           title="字体大小"

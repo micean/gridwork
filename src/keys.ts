@@ -39,14 +39,14 @@ export const registerKeys = () => {
     })
   })
   Mousetrap.bind('ins', (event) => {
+    if(!selectedCellsStore.selectedCells.length) return
+    event.preventDefault();
+    event.stopPropagation();
+
     if(selectedCellsStore.selectedCells.length === 1) {
-      event.preventDefault();
-      event.stopPropagation();
       const path = selectedCellsStore.selectedCells[0];
       emitter.emit('cell-inner', { path });
     }else if(selectedCellsStore.selectedCells.length > 1){
-      event.preventDefault();
-      event.stopPropagation();
       const path = selectedCellsStore.selectedCells[0];
       emitter.emit('cell-inner', { path, gridPath: selectedCellsStore.selectedCells });
     }
