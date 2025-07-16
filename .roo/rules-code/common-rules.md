@@ -1,3 +1,3 @@
-* Read projectBrief.md first when a new task is started
-* NEVER executiong `npm run dev`，because program still running
-* DO NOT waiting for `git commit` execution
+- Read projectBrief.md first when a new task is started
+- NEVER executiong `npm run dev`，because program still running
+- DO NOT wait for the result of `git commit` execution

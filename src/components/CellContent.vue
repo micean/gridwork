@@ -6,6 +6,7 @@ import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
 import {isCursorAtHead, isCursorAtTail, selectionOnTail} from '@/utils/edit.ts'
 import { createGridData, pickGridData } from '@/utils/data.ts'
 import emitter from '@/utils/bus.ts'
+import {useSearchStore} from "@/stores/search.ts";
 
 interface Props {
   path: string
@@ -21,6 +22,7 @@ const props = withDefaults(defineProps<Props>(), {
   path: '',
 })
 const selectedCellsStore = useSelectedCellsStore()
+const searchStore = useSearchStore()
 const cellInput = useTemplateRef('cellInput')
 
 const isCellSelected = computed(() => {
@@ -223,6 +225,7 @@ const handleMouse = (event: Event, type: string) => {
       :contenteditable="isCellSelected"
       :style="{
         'font-size': model.fontSize ? model.fontSize + 'px' : '13px',
+        'color': searchStore.isSearchVisible && searchStore.highlight(model.text || '') ? 'red' : undefined,
         'max-width': model.flexDirection === 'row' && model.innerGrid ? '400px' : undefined,
         'display': model.flexDirection === 'row' && model.innerGrid ? 'flex' : undefined,
         'align-items': model.flexDirection === 'row' && model.innerGrid ? 'center' : undefined,
@@ -237,6 +240,7 @@ const handleMouse = (event: Event, type: string) => {
       @mousedown="detectMouseEdit"
       >{{ vars.content }}</code
     >
+    <div v-if="searchStore.isSearchVisible && searchStore.searchQuery.length && !searchStore.highlight(model.text || '')" class="masked"></div>
     <TableComponent
       v-if="model.innerGrid && model.innerGrid.length > 0"
       v-model="model.innerGrid"

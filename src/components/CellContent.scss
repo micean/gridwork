@@ -7,6 +7,7 @@
   align-items: flex-start;
   gap: 5px;
   cursor: default;
+  position: relative;
   user-select: none;
 
   &:hover:not(:has(.cell-content:hover)) {
@@ -22,6 +23,15 @@
 
   @media (max-width: 480px) {
     padding: 4px;
+  }
+
+  .masked{
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: #0000006b;
   }
 
   .cell-input {

@@ -6,6 +6,6 @@ export interface CellData{
   fontSize?: number;
   backgroundColor?: string;
   flexDirection?: 'row' | 'column';
-
+  highlight?: boolean;
   innerGrid?: CellData[][]
 }

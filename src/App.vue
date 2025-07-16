@@ -9,12 +9,13 @@ import {
   lookupCellData,
   lookupInnerGrid,
 } from '@/utils/data.ts'
-import { ref, onMounted, onUnmounted, watch, computed } from 'vue'
-import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
-import { useHistoryStore } from '@/stores/history.ts'
-import type { CellData } from '../env'
-import { pasteEventListener, copyEventListener, cutEventListener } from '@/utils/clipboard.ts'
-import { wheelEventListener } from '@/keys.ts'
+import {computed, nextTick, onMounted, onUnmounted, ref, watch} from 'vue'
+import {useSelectedCellsStore} from '@/stores/selectedCells.ts'
+import {useHistoryStore} from '@/stores/history.ts'
+import {useSearchStore} from '@/stores/search.ts'
+import type {CellData} from '../env'
+import {copyEventListener, cutEventListener, pasteEventListener} from '@/utils/clipboard.ts'
+import {wheelEventListener} from '@/keys.ts'
 import emitter from '@/utils/bus.ts'
 
 const gridData = createGridData(4, 4)
@@ -22,9 +23,12 @@ const vars = ref({
   showFontSizePopup: false,
   fontSize: 13,
   showColorPopup: false,
+  showSearchPopup: false,
+  searchQuery: '',
 })
 const selectedCellsStore = useSelectedCellsStore()
 const historyStore = useHistoryStore()
+const searchStore = useSearchStore()
 
 selectedCellsStore.setupGrid(gridData)
 historyStore.initialize(JSON.stringify(gridData))
@@ -39,11 +43,26 @@ watch(
     }
     historyStore.addHistory(JSON.stringify(newData), selectedCellsStore.selectedCells)
   },
-  { deep: true }
+  { deep: true },
+)
+watch(
+  () => vars.value.showSearchPopup,
+  (newData) => {
+    if(newData){
+      selectedCellsStore.clearSelection();
+    }
+    searchStore.setSearchVisible(newData);
+  },
+)
+watch(
+  () => vars.value.searchQuery,
+  (newText) => {
+    searchStore.setSearchQuery(newText);
+  },
 )
 
 const summable = computed(() => {
-  const [rowSize, colSize] = selectedCellsStore.countSelectedRowColSize();
+  const [rowSize, colSize] = selectedCellsStore.countSelectedRowColSize()
   return (rowSize === 1 && colSize > 2) || (rowSize > 2 && colSize === 1)
 })
 
@@ -90,7 +109,9 @@ const removeRowCol = (type: 'row' | 'col') => {
     const pos: [number, number] = parts.pop()!
     return { parts, pos }
   })
-  const parentCell = posArr[0].parts.length ? lookupCellData(selectedCellsStore.gridData, posArr[0].parts) : undefined;
+  const parentCell = posArr[0].parts.length
+    ? lookupCellData(selectedCellsStore.gridData, posArr[0].parts)
+    : undefined
   const parentGrid: CellData[][] = lookupInnerGrid(selectedCellsStore.gridData, posArr[0].parts)
 
   switch (type) {
@@ -103,9 +124,9 @@ const removeRowCol = (type: 'row' | 'col') => {
           parentGrid.splice(row - index, 1)
         })
       if (parentGrid.length === 0) {
-        if(parentCell){
+        if (parentCell) {
           parentCell.innerGrid = undefined
-        }else{
+        } else {
           parentGrid.push(createRowData(1))
         }
       }
@@ -119,9 +140,9 @@ const removeRowCol = (type: 'row' | 'col') => {
           parentGrid.forEach((row) => row.splice(col - index, 1))
         })
       if (parentGrid[0]?.length === 0) {
-        if(parentCell){
+        if (parentCell) {
           parentCell.innerGrid = undefined
-        }else{
+        } else {
           parentGrid.splice(0, parentGrid.length)
           parentGrid.push(createRowData(1))
         }
@@ -135,12 +156,12 @@ const removeRowCol = (type: 'row' | 'col') => {
 
 const insertChild = () => {
   if (!selectedCellsStore.selectedCells.length) return
-  if(selectedCellsStore.selectedCells.length === 1) {
-    const path = selectedCellsStore.selectedCells[0];
-    emitter.emit('cell-inner', { path });
-  }else if(selectedCellsStore.selectedCells.length > 1){
-    const path = selectedCellsStore.selectedCells[0];
-    emitter.emit('cell-inner', { path, gridPath: selectedCellsStore.selectedCells });
+  if (selectedCellsStore.selectedCells.length === 1) {
+    const path = selectedCellsStore.selectedCells[0]
+    emitter.emit('cell-inner', { path })
+  } else if (selectedCellsStore.selectedCells.length > 1) {
+    const path = selectedCellsStore.selectedCells[0]
+    emitter.emit('cell-inner', { path, gridPath: selectedCellsStore.selectedCells })
   }
 }
 
@@ -185,20 +206,44 @@ const handleColorSelect = (color: string) => {
   selectedCellsStore.selectedCells
     .map((it) => lookupCellData(selectedCellsStore.gridData, it)!)
     .forEach((cell) => {
-        cell.backgroundColor = color
+      cell.backgroundColor = color
     })
 
   // 选择颜色后关闭弹窗
   vars.value.showColorPopup = false
 }
 
+const toggleSearchPopup = () => {
+  vars.value.showSearchPopup = !vars.value.showSearchPopup
+  if (vars.value.showSearchPopup) {
+    nextTick(() => {
+      const searchInput = document.querySelector('.search-popup input') as HTMLInputElement
+      searchInput?.focus()
+      searchInput?.select()
+    })
+  }
+}
+
+const clearSearch = () => {
+  vars.value.searchQuery = ''
+  searchStore.clearSearchQuery()
+  const searchInput = document.querySelector('.search-popup input') as HTMLInputElement
+  searchInput?.focus()
+}
+
 const handleSummation = () => {
   if (!summable.value) return
 
-  const cells =  selectedCellsStore.selectedCells.map((it) => lookupCellData(selectedCellsStore.gridData, it)!);
-  const lastCell = cells.pop()!;
-  const sum = cells.map(it => it.text).filter(it => !it || /^\-?\d+(\.\d+)?$/.test(it)).map(it => Number(it || 0)).reduce((a, b) => a + b, 0);
-  lastCell.text = sum.toString();
+  const cells = selectedCellsStore.selectedCells.map(
+    (it) => lookupCellData(selectedCellsStore.gridData, it)!,
+  )
+  const lastCell = cells.pop()!
+  const sum = cells
+    .map((it) => it.text)
+    .filter((it) => !it || /^\-?\d+(\.\d+)?$/.test(it))
+    .map((it) => Number(it || 0))
+    .reduce((a, b) => a + b, 0)
+  lastCell.text = sum.toString()
 }
 
 const handleUndo = () => {
@@ -226,9 +271,15 @@ const handleClickOutside = (event: Event) => {
   if (!target.closest('.font-size-popup') && !target.closest('[title="字体大小"]')) {
     vars.value.showFontSizePopup = false
   }
+  if (!target.closest('.search-popup') && !target.closest('[title="搜索"]')) {
+    vars.value.showSearchPopup = false
+  }
 }
 const handleEditorBlur = () => {
-  historyStore.addHistory(JSON.stringify(selectedCellsStore.gridData), selectedCellsStore.selectedCells)
+  historyStore.addHistory(
+    JSON.stringify(selectedCellsStore.gridData),
+    selectedCellsStore.selectedCells,
+  )
 }
 
 onMounted(() => {
@@ -238,6 +289,12 @@ onMounted(() => {
   document.addEventListener('wheel', wheelEventListener)
   document.addEventListener('click', handleClickOutside)
   window.addEventListener('editor-blur', handleEditorBlur as EventListener)
+  document.addEventListener('keydown', (e) => {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'f') {
+      e.preventDefault()
+      toggleSearchPopup()
+    }
+  })
 })
 
 onUnmounted(() => {
@@ -359,15 +416,36 @@ onUnmounted(() => {
         <i
           title="插入子级"
           @click="insertChild"
-          :class="{ disabled: !selectedCellsStore.selectedCells.length }">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21 3C21.5523 3 22 3.44772 22 4V11H20V5H4V19H10V21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3H21ZM21 13C21.5523 13 22 13.4477 22 14V20C22 20.5523 21.5523 21 21 21H13C12.4477 21 12 20.5523 12 20V14C12 13.4477 12.4477 13 13 13H21ZM20 15H14V19H20V15Z"></path></svg>
+          :class="{ disabled: !selectedCellsStore.selectedCells.length }"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="currentColor"
+          >
+            <path
+              d="M21 3C21.5523 3 22 3.44772 22 4V11H20V5H4V19H10V21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3H21ZM21 13C21.5523 13 22 13.4477 22 14V20C22 20.5523 21.5523 21 21 21H13C12.4477 21 12 20.5523 12 20V14C12 13.4477 12.4477 13 13 13H21ZM20 15H14V19H20V15Z"
+            ></path>
+          </svg>
         </i>
         <i
           title="调整内部布局"
           @click="toggleLayout"
           :class="{ disabled: !selectedCellsStore.selectedCells.length }"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="currentColor"
           >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M21 20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3H20C20.5523 3 21 3.44772 21 4V20ZM11 5H5V19H11V5ZM19 13H13V19H19V13ZM19 5H13V11H19V5Z"></path></svg>
+            <path
+              d="M21 20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3H20C20.5523 3 21 3.44772 21 4V20ZM11 5H5V19H11V5ZM19 13H13V19H19V13ZM19 5H13V11H19V5Z"
+            ></path>
+          </svg>
         </i>
         <i
           title="字体大小"
@@ -427,30 +505,90 @@ onUnmounted(() => {
             ></path>
           </svg>
 
-          <ColorPicker
-            v-model="vars.showColorPopup"
-            @select-color="handleColorSelect"
-          />
+          <ColorPicker v-model="vars.showColorPopup" @select-color="handleColorSelect" />
         </i>
         <i
-          title="求和"
-          @click="handleSummation"
-          :class="{ disabled: !summable }">
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M5 18L12.6796 12L5 6V4H19V6H8.26348L16 12L8.26348 18H19V20H5V18Z"></path></svg>
-        </i>
-        <i
-          title="撤消"
-          @click="handleUndo"
-          :class="{ disabled: !historyStore.canUndo }"
+          title="搜索"
+          @click="toggleSearchPopup"
+          :class="{ active: vars.showSearchPopup }"
+          style="position: relative"
+        >
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="currentColor"
           >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5.82843 6.99955L8.36396 9.53509L6.94975 10.9493L2 5.99955L6.94975 1.0498L8.36396 2.46402L5.82843 4.99955H13C17.4183 4.99955 21 8.58127 21 12.9996C21 17.4178 17.4183 20.9996 13 20.9996H4V18.9996H13C16.3137 18.9996 19 16.3133 19 12.9996C19 9.68584 16.3137 6.99955 13 6.99955H5.82843Z"></path></svg>
+            <path
+              d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.032 20 2 15.968 2 11C2 6.032 6.032 2 11 2C15.968 2 20 6.032 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.0247 15.8748C17.2475 14.6146 18 12.8956 18 11C18 7.1325 14.8675 4 11 4C7.1325 4 4 7.1325 4 11C4 14.8675 7.1325 18 11 18C12.8956 18 14.6146 17.2475 15.8748 16.0247L16.0247 15.8748Z"
+            ></path>
+          </svg>
+
+          <!-- 搜索弹出层 -->
+          <div v-if="vars.showSearchPopup" class="search-popup" @click="(e) => e.stopPropagation()">
+            <div class="popup-content">
+              <div class="popup-body">
+                <div class="search-input-wrapper">
+                  <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                    <circle cx="11" cy="11" r="8"></circle>
+                    <path d="m21 21-4.35-4.35"></path>
+                  </svg>
+                  <input
+                    v-model="vars.searchQuery"
+                    type="text"
+                    class="search-input"
+                    placeholder="搜索..."
+                    @keyup.esc="toggleSearchPopup"
+                    @keyup.enter="toggleSearchPopup"
+                  />
+                  <button v-if="vars.searchQuery" class="clear-button" @click="clearSearch">
+                    <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                      <line x1="18" y1="6" x2="6" y2="18"></line>
+                      <line x1="6" y1="6" x2="18" y2="18"></line>
+                    </svg>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
         </i>
-        <i
-          title="重做"
-          @click="handleRedo"
-          :class="{ disabled: !historyStore.canRedo }"
+        <i title="求和" @click="handleSummation" :class="{ disabled: !summable }">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="20"
+            height="20"
+            fill="currentColor"
           >
-          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18.1716 6.99955H11C7.68629 6.99955 5 9.68584 5 12.9996C5 16.3133 7.68629 18.9996 11 18.9996H20V20.9996H11C6.58172 20.9996 3 17.4178 3 12.9996C3 8.58127 6.58172 4.99955 11 4.99955H18.1716L15.636 2.46402L17.0503 1.0498L22 5.99955L17.0503 10.9493L15.636 9.53509L18.1716 6.99955Z"></path></svg>
+            <path d="M5 18L12.6796 12L5 6V4H19V6H8.26348L16 12L8.26348 18H19V20H5V18Z"></path>
+          </svg>
+        </i>
+        <i title="撤消" @click="handleUndo" :class="{ disabled: !historyStore.canUndo }">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="currentColor"
+          >
+            <path
+              d="M5.82843 6.99955L8.36396 9.53509L6.94975 10.9493L2 5.99955L6.94975 1.0498L8.36396 2.46402L5.82843 4.99955H13C17.4183 4.99955 21 8.58127 21 12.9996C21 17.4178 17.4183 20.9996 13 20.9996H4V18.9996H13C16.3137 18.9996 19 16.3133 19 12.9996C19 9.68584 16.3137 6.99955 13 6.99955H5.82843Z"
+            ></path>
+          </svg>
+        </i>
+        <i title="重做" @click="handleRedo" :class="{ disabled: !historyStore.canRedo }">
+          <svg
+            xmlns="http://www.w3.org/2000/svg"
+            viewBox="0 0 24 24"
+            width="18"
+            height="18"
+            fill="currentColor"
+          >
+            <path
+              d="M18.1716 6.99955H11C7.68629 6.99955 5 9.68584 5 12.9996C5 16.3133 7.68629 18.9996 11 18.9996H20V20.9996H11C6.58172 20.9996 3 17.4178 3 12.9996C3 8.58127 6.58172 4.99955 11 4.99955H18.1716L15.636 2.46402L17.0503 1.0498L22 5.99955L17.0503 10.9493L15.636 9.53509L18.1716 6.99955Z"
+            ></path>
+          </svg>
         </i>
       </div>
     </header>
