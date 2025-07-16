@@ -9,8 +9,9 @@ import {
   lookupCellData,
   lookupInnerGrid,
 } from '@/utils/data.ts'
-import { ref, onMounted, onUnmounted } from 'vue'
+import { ref, onMounted, onUnmounted, watch } from 'vue'
 import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
+import { useHistoryStore } from '@/stores/history.ts'
 import type { CellData } from '../env'
 import { pasteEventListener, copyEventListener, cutEventListener } from '@/utils/clipboard.ts'
 import { wheelEventListener } from '@/keys.ts'
@@ -22,7 +23,23 @@ const vars = ref({
   showColorPopup: false,
 })
 const selectedCellsStore = useSelectedCellsStore()
+const historyStore = useHistoryStore()
+
 selectedCellsStore.setupGrid(gridData)
+historyStore.initialize(JSON.stringify(gridData))
+
+// 监听数据变化，记录历史（排除编辑中的数据）
+watch(
+  () => selectedCellsStore.gridData,
+  (newData) => {
+    // 如果有单元格正在编辑，不记录历史
+    if (selectedCellsStore.editingCell) {
+      return
+    }
+    historyStore.addHistory(JSON.stringify(newData), selectedCellsStore.selectedCells)
+  },
+  { deep: true }
+)
 
 const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
   if (selectedCellsStore.selectedCells.length !== 1) return
@@ -140,6 +157,22 @@ const handleColorSelect = (color: string) => {
   vars.value.showColorPopup = false
 }
 
+const handleUndo = () => {
+  const previousData = historyStore.undo()
+  if (previousData) {
+    selectedCellsStore.setupGrid(JSON.parse(previousData.gridData))
+    selectedCellsStore.setSelectedCells(previousData.selectedCells || [])
+  }
+}
+
+const handleRedo = () => {
+  const nextData = historyStore.redo()
+  if (nextData) {
+    selectedCellsStore.setupGrid(JSON.parse(nextData.gridData))
+    selectedCellsStore.setSelectedCells(nextData.selectedCells || [])
+  }
+}
+
 // 添加和移除事件监听
 const handleClickOutside = (event: Event) => {
   const target = event.target as HTMLElement
@@ -150,6 +183,9 @@ const handleClickOutside = (event: Event) => {
     vars.value.showFontSizePopup = false
   }
 }
+const handleEditorBlur = () => {
+  historyStore.addHistory(JSON.stringify(selectedCellsStore.gridData), selectedCellsStore.selectedCells)
+}
 
 onMounted(() => {
   document.addEventListener('paste', pasteEventListener)
@@ -157,6 +193,7 @@ onMounted(() => {
   document.addEventListener('cut', cutEventListener)
   document.addEventListener('wheel', wheelEventListener)
   document.addEventListener('click', handleClickOutside)
+  window.addEventListener('editor-blur', handleEditorBlur as EventListener)
 })
 
 onUnmounted(() => {
@@ -165,6 +202,7 @@ onUnmounted(() => {
   document.removeEventListener('cut', cutEventListener)
   document.removeEventListener('wheel', wheelEventListener)
   document.removeEventListener('click', handleClickOutside)
+  window.removeEventListener('editor-blur', handleEditorBlur as EventListener)
 })
 </script>
 
@@ -180,8 +218,8 @@ onUnmounted(() => {
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             fill="currentColor"
           >
             <path
@@ -197,8 +235,8 @@ onUnmounted(() => {
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             fill="currentColor"
           >
             <path
@@ -214,8 +252,8 @@ onUnmounted(() => {
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             fill="currentColor"
           >
             <path
@@ -231,8 +269,8 @@ onUnmounted(() => {
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             fill="currentColor"
           >
             <path
@@ -248,8 +286,8 @@ onUnmounted(() => {
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             fill="currentColor"
           >
             <path
@@ -265,8 +303,8 @@ onUnmounted(() => {
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             fill="currentColor"
           >
             <path
@@ -283,8 +321,8 @@ onUnmounted(() => {
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             fill="currentColor"
           >
             <path
@@ -323,8 +361,8 @@ onUnmounted(() => {
           <svg
             xmlns="http://www.w3.org/2000/svg"
             viewBox="0 0 24 24"
-            width="24"
-            height="24"
+            width="20"
+            height="20"
             fill="currentColor"
           >
             <path
@@ -336,6 +374,20 @@ onUnmounted(() => {
             v-model="vars.showColorPopup"
             @select-color="handleColorSelect"
           />
+        </i>
+        <i
+          title="撤消"
+          @click="handleUndo"
+          :class="{ disabled: !historyStore.canUndo }"
+          >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M5.82843 6.99955L8.36396 9.53509L6.94975 10.9493L2 5.99955L6.94975 1.0498L8.36396 2.46402L5.82843 4.99955H13C17.4183 4.99955 21 8.58127 21 12.9996C21 17.4178 17.4183 20.9996 13 20.9996H4V18.9996H13C16.3137 18.9996 19 16.3133 19 12.9996C19 9.68584 16.3137 6.99955 13 6.99955H5.82843Z"></path></svg>
+        </i>
+        <i
+          title="重做"
+          @click="handleRedo"
+          :class="{ disabled: !historyStore.canRedo }"
+          >
+          <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="18" height="18" fill="currentColor"><path d="M18.1716 6.99955H11C7.68629 6.99955 5 9.68584 5 12.9996C5 16.3133 7.68629 18.9996 11 18.9996H20V20.9996H11C6.58172 20.9996 3 17.4178 3 12.9996C3 8.58127 6.58172 4.99955 11 4.99955H18.1716L15.636 2.46402L17.0503 1.0498L22 5.99955L17.0503 10.9493L15.636 9.53509L18.1716 6.99955Z"></path></svg>
         </i>
       </div>
     </header>

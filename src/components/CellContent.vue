@@ -76,6 +76,7 @@ const handleBlur = () => {
   window.getSelection()?.removeAllRanges()
   selectedCellsStore.setEditingCell(null)
   vars.value.content = model.value.text
+  window.dispatchEvent(new CustomEvent('editor-blur', { detail: { path: props.path } }))
 }
 
 const handleEsc = (event: Event) => {
