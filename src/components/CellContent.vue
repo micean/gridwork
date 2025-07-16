@@ -156,8 +156,8 @@ const handleCellFocusByKey = (event: { path: string; startEdit?: boolean }) => {
 
 const handlePressDelete = (event: { path: string }) => {
   if (event.path === props.path) {
-    vars.value.content = ''
     model.value.text = ''
+    model.value.innerGrid = undefined
     cellInput.value!.textContent = ''
   }
 }

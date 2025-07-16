@@ -1,6 +1,52 @@
 import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
-import { createCellData, createRowData, lookupCellData, lookupInnerGrid, pickGridData } from '@/utils/data.ts'
+import {
+  copyCellData,
+  createCellData,
+  createRowData,
+  lookupCellData,
+  lookupInnerGrid, nanoid, parseGrid,
+  pickGridData, stringifyCell,
+  tablizeGrid
+} from '@/utils/data.ts'
 import type { CellData } from '../../env'
+
+/**
+ * 获取选中单元格的剪贴板数据
+ */
+const getClipboardData = () => {
+  const selectedCellsStore = useSelectedCellsStore()
+  
+  // 获取选中的单元格数据
+  const selectedCells = pickGridData(selectedCellsStore.gridData, selectedCellsStore.selectedCells, false);
+
+  // 生成纯文本格式（制表符分隔）
+  const plainText = selectedCellsStore.selectedCells.length === 1 ?
+    stringifyCell(lookupCellData(selectedCellsStore.gridData, selectedCellsStore.selectedCells[0])!) :
+    selectedCells.map(row => row.map(cell => stringifyCell(cell, true)).join('\t')).join('\n')
+
+  // 生成HTML表格格式
+  const htmlText = tablizeGrid(selectedCells);
+
+  return { plainText, htmlText }
+}
+
+/**
+ * 将数据写入剪贴板
+ */
+const writeToClipboard = async (event: ClipboardEvent, plainText: string, htmlText: string) => {
+  try {
+    if (event.clipboardData) {
+      event.clipboardData.setData('text/plain', plainText)
+      event.clipboardData.setData('text/html', htmlText)
+    } else if (navigator.clipboard) {
+      await navigator.clipboard.writeText(plainText)
+    }
+    return true
+  } catch (error) {
+    console.error('无法写入剪贴板内容:', error)
+    return false
+  }
+}
 
 export const pasteEventListener = async (event: ClipboardEvent) => {
   const selectedCellsStore = useSelectedCellsStore()
@@ -16,11 +62,11 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
     const clipboardText: {
       original: string
       isGrid: boolean
-      gridText: string[][]
+      gridData: CellData[][]
     } = {
       original: '',
       isGrid: false,
-      gridText: [],
+      gridData: [],
     }
 
     // 尝试多种方式获取剪贴板内容
@@ -31,20 +77,9 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
       const htmlText = event.clipboardData.getData('text/html')
       if(htmlText){
         // 检测是否是表格，如果是，获取表格数据放在gridText中，并设置isGrid为true
-        const parser = new DOMParser()
-        const doc = parser.parseFromString(htmlText, 'text/html')
-        const tables = doc.querySelectorAll('table')
-
-        if (tables.length > 0) {
-          for (let i = 0; i < tables.length; i++) {
-            const table = tables[i]
-            const rows = table.querySelectorAll('tr')
-            const grid = Array.from(rows).map(row => {
-              const cells = row.querySelectorAll('td, th')
-              return Array.from(cells).map(cell => cell.textContent || '')
-            })
-            clipboardText.gridText.push(...grid)
-          }
+        const grid = parseGrid(htmlText)
+        if(grid){
+          clipboardText.gridData = grid
           clipboardText.isGrid = true
         }
       }
@@ -56,7 +91,14 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
       // 检测是否是表格，方式：是否有\t或\n，如果是，获取表格数据放在gridText中，并设置isGrid为true
       const text = clipboardText.original
       if (text.includes('\t') || text.includes('\n')) {
-        clipboardText.gridText = text.replace(/\r/g, '').split('\n').map(row => row.split('\t'))
+        clipboardText.gridData = text.replace(/\r/g, '')
+          .split('\n')
+          .map(row => row.split('\t').map(text => {
+            return {
+              id: nanoid(),
+              text,
+            }
+          }))
         clipboardText.isGrid = true
       }
     }
@@ -64,7 +106,7 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
     if (clipboardText && selectedCellsStore.selectedCells.length > 0) {
       // 将剪贴板内容填入所有选定的单元格
       if(!clipboardText.isGrid){
-        console.log(clipboardText.gridText)
+        console.log(clipboardText.gridData)
         selectedCellsStore.selectedCells.map(it =>
           lookupCellData(selectedCellsStore.gridData, it)!
         ).forEach(cell => {
@@ -80,7 +122,7 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
         const parentGrid: CellData[][] = lookupInnerGrid(selectedCellsStore.gridData, startCellParts)
         if (selectedCells.length === 1) {
           // 单个单元格：以该单元格为起点填充表格数据
-          clipboardText.gridText.forEach((rowData, rowIndex) => {
+          clipboardText.gridData.forEach((rowData, rowIndex) => {
             const targetRow = startRow + rowIndex
             if(parentGrid.length <= targetRow){
               parentGrid.push(createRowData(parentGrid[0].length))
@@ -94,26 +136,36 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
               const cellPath = startCellParts.concat([[targetRow, targetCol]])
               const cell = lookupCellData(selectedCellsStore.gridData, cellPath)
               if (cell) {
-                cell.text = cellData
+                copyCellData(cellData, cell)
               }
             })
           })
         } else {
-          // 多个单元格：仅在选定范围内填充数据
-          clipboardText.gridText.forEach((rowData, rowIndex) => {
-            const targetRow = startRow + rowIndex
-            rowData.forEach((cellData, colIndex) => {
-              const targetCol = startCol + colIndex
-              const cellPath = startCellParts.concat([[targetRow, targetCol]]).map(it => JSON.stringify(it)).join('>')
-              if(!selectedCells.includes(cellPath)){
-                return
-              }
-              const cell = lookupCellData(selectedCellsStore.gridData, cellPath)
-              if (cell) {
-                cell.text = cellData
-              }
+          // 多个单元格
+          if(clipboardText.gridData.length === 1 && clipboardText.gridData[0].length === 1){
+            // 如果gridText只有一个单元格，那么将其复制到所有选定的单元格
+            const cellData = clipboardText.gridData[0][0]
+            selectedCells.map(cellPath => lookupCellData(selectedCellsStore.gridData, cellPath)).filter(Boolean).forEach(cell => {
+              copyCellData(cellData, cell!)
             })
-          })
+          }else{
+            // 如果gridText有多个单元格，那么将gridText中的单元格复制到所有选定的单元格
+            clipboardText.gridData.forEach((rowData, rowIndex) => {
+              const targetRow = startRow + rowIndex
+              rowData.forEach((cellData, colIndex) => {
+                const targetCol = startCol + colIndex
+                const cellPath = startCellParts.concat([[targetRow, targetCol]]).map(it => JSON.stringify(it)).join('>')
+                if(!selectedCells.includes(cellPath)){
+                  return
+                }
+                const cell = lookupCellData(selectedCellsStore.gridData, cellPath)
+                if (cell) {
+                  cellData.id = nanoid()
+                  copyCellData(cellData, cell)
+                }
+              })
+            })
+          }
         }
       }
 
@@ -133,33 +185,37 @@ export const copyEventListener = async (event: ClipboardEvent) => {
 
   // 阻止默认复制行为
   event.preventDefault()
-  try {
-    // 获取选中的单元格数据
-    const gridText: string[][] = pickGridData(selectedCellsStore.gridData, selectedCellsStore.selectedCells, false)
-      .map(it => it.map(cell => cell.text))
+  
+  const { plainText, htmlText } = getClipboardData()
+  await writeToClipboard(event, plainText, htmlText)
+  
+  console.log('已复制到剪贴板:', plainText)
+}
 
-    // 生成纯文本格式（制表符分隔）
-    const plainText = gridText.map(row => row.join('\t')).join('\n')
+export const cutEventListener = async (event: ClipboardEvent) => {
+  const selectedCellsStore = useSelectedCellsStore()
 
-    // 生成HTML表格格式
-    const htmlText = `
-      <table>
-        ${gridText.map(row =>
-          `<tr>${row.map(cell => `<td>${cell}</td>`).join('')}</tr>`
-        ).join('')}
-      </table>
-    `.trim().replace(/\s+/g, ' ')
+  // 如果有单元格正在编辑，不处理剪切事件
+  if (selectedCellsStore.editingCell || !selectedCellsStore.selectedCells.length) {
+    return
+  }
 
-    // 写入剪贴板
-    if (event.clipboardData) {
-      event.clipboardData.setData('text/plain', plainText)
-      event.clipboardData.setData('text/html', htmlText)
-    } else if (navigator.clipboard) {
-      await navigator.clipboard.writeText(plainText)
-    }
+  // 阻止默认剪切行为
+  event.preventDefault()
+  
+  const { plainText, htmlText } = getClipboardData()
+  const success = await writeToClipboard(event, plainText, htmlText)
+  
+  if (success) {
+    console.log('已剪切到剪贴板:', plainText)
 
-    console.log('已复制到剪贴板:', plainText)
-  } catch (error) {
-    console.error('无法写入剪贴板内容:', error)
+    // 清空选中的单元格内容（剪切操作）
+    selectedCellsStore.selectedCells.forEach(cellPath => {
+      const cell = lookupCellData(selectedCellsStore.gridData, cellPath)
+      if (cell) {
+        cell.text = ''
+        cell.innerGrid = undefined
+      }
+    })
   }
 }

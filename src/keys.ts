@@ -31,7 +31,7 @@ export const registerKeys = () => {
   Mousetrap.bind('right', () => {
     selectedCellsStore.focusAnotherCell('right');
   })
-  Mousetrap.bind('del', () => {
+  Mousetrap.bind(['del', 'backspace'], () => {
     selectedCellsStore.selectedCells.forEach(path => {
       emitter.emit('cell-delete', { path });
     })

@@ -12,7 +12,7 @@ import {
 import { ref, onMounted, onUnmounted } from 'vue'
 import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
 import type { CellData } from '../env'
-import { pasteEventListener, copyEventListener } from '@/utils/clipboard.ts'
+import { pasteEventListener, copyEventListener, cutEventListener } from '@/utils/clipboard.ts'
 import { wheelEventListener } from '@/keys.ts'
 
 const gridData = createGridData(4, 4)
@@ -154,6 +154,7 @@ const handleClickOutside = (event: Event) => {
 onMounted(() => {
   document.addEventListener('paste', pasteEventListener)
   document.addEventListener('copy', copyEventListener)
+  document.addEventListener('cut', cutEventListener)
   document.addEventListener('wheel', wheelEventListener)
   document.addEventListener('click', handleClickOutside)
 })
@@ -161,6 +162,7 @@ onMounted(() => {
 onUnmounted(() => {
   document.removeEventListener('paste', pasteEventListener)
   document.removeEventListener('copy', copyEventListener)
+  document.removeEventListener('cut', cutEventListener)
   document.removeEventListener('wheel', wheelEventListener)
   document.removeEventListener('click', handleClickOutside)
 })

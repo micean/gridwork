@@ -22,6 +22,14 @@ export const createCellData = (): CellData => {
     text: '',
   }
 }
+export const copyCellData = (original: CellData, target: CellData) => {
+  target.id = original.id
+  target.text = original.text
+  target.fontSize = original.fontSize
+  target.backgroundColor = original.backgroundColor
+  target.innerGrid = original.innerGrid
+  return target
+}
 export const lookupCellData = (gridData: CellData[][], parts: PathString | PathNumber) => {
   if(!parts.length){
     return null
@@ -81,4 +89,63 @@ export const pickGridData = (gridData: CellData[][], paths: PathString[] | PathN
   ).map(it => {
     return it.filter(Boolean)
   })
+}
+export const stringifyCell = (cell: CellData, noWrap = false, depth: number = 0) => {
+  let inner = '';
+  const wrap = noWrap ? '' : '\n';
+  if(cell.innerGrid) {
+    inner = cell.innerGrid.map(row => {
+      return row.map(cell => {
+        return stringifyCell(cell, true, depth + 1)
+      }).join('\t')
+    }).map(row => Array(depth + 1).fill('\t').join('') + row).join(wrap)
+  }
+  return (noWrap ? cell.text.replace(/\r?\n/g, ' ') : cell.text) + ( inner ? wrap + inner : '' )
+}
+export const tablizeGrid = (gridData: CellData[][]): string => {
+  if(!gridData.length) return '';
+  const rows = gridData.map(row => {
+    return row.map(col =>
+      `<td ${col.backgroundColor ? `style="background-color: ${col.backgroundColor}"` : ''}>
+       <code ${col.fontSize ? `style="font-size: ${col.fontSize}px"` : ''}>${col.text}</code>
+       ${tablizeGrid(col.innerGrid || [])}
+       </td>`
+    ).join('')
+  }).map(row => {
+    return `<tr>${row}</tr>`
+  }).join('')
+  return `<table><tbody>${rows}</tbody></table>`;
+}
+export const parseGrid = (html: string|HTMLElement): CellData[][]|undefined => {
+  if(typeof html === 'string'){
+    const parser = new DOMParser()
+    const doc = parser.parseFromString(html, 'text/html')
+    const table = doc.querySelector('table')
+    if(!table){
+      return undefined
+    }
+    html = table
+  }
+  const table = html as HTMLElement
+  const rows = table.querySelectorAll(':scope>tbody>tr')
+  const grid = Array.from(rows).map(row => {
+    const tds = row.querySelectorAll(':scope>td, :scope>th')
+    const cells = Array.from(tds).map(elem => elem as HTMLElement).map(elem => {
+      const innerTableElem = elem.querySelector(':scope>table')
+      if(innerTableElem) elem.removeChild(innerTableElem)
+      const firstChildElem = [...elem.childNodes].find(node => {
+        if(node.nodeType === Node.ELEMENT_NODE) return !['TABLE','BR','HR'].includes((node as HTMLElement).tagName)
+        return false
+      })
+
+      const id = nanoid()
+      const text = elem.textContent?.trim() || ''
+      const fontSize = firstChildElem ? parseInt(window.getComputedStyle(firstChildElem as HTMLElement).fontSize.replace('px', '')) : undefined
+      const backgroundColor = elem.style.backgroundColor || undefined
+      const innerGrid = innerTableElem ? parseGrid(innerTableElem as HTMLElement) : undefined
+      return {id, text, fontSize, backgroundColor, innerGrid}
+    });
+    return cells;
+  })
+  return grid;
 }
