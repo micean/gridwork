@@ -1,4 +1,4 @@
-import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
+import { useDocumentStore } from '@/stores/document.ts'
 import {
   copyCellData,
   createCellData,
@@ -14,14 +14,14 @@ import type { CellData } from '../../env'
  * 获取选中单元格的剪贴板数据
  */
 const getClipboardData = () => {
-  const selectedCellsStore = useSelectedCellsStore()
-  
+  const documentStore = useDocumentStore()
+
   // 获取选中的单元格数据
-  const selectedCells = pickGridData(selectedCellsStore.gridData, selectedCellsStore.selectedCells, false);
+  const selectedCells = pickGridData(documentStore.gridData, documentStore.selectedCells, false);
 
   // 生成纯文本格式（制表符分隔）
-  const plainText = selectedCellsStore.selectedCells.length === 1 ?
-    stringifyCell(lookupCellData(selectedCellsStore.gridData, selectedCellsStore.selectedCells[0])!) :
+  const plainText = documentStore.selectedCells.length === 1 ?
+    stringifyCell(lookupCellData(documentStore.gridData, documentStore.selectedCells[0])!) :
     selectedCells.map(row => row.map(cell => stringifyCell(cell, true)).join('\t')).join('\n')
 
   // 生成HTML表格格式
@@ -49,9 +49,9 @@ const writeToClipboard = async (event: ClipboardEvent, plainText: string, htmlTe
 }
 
 export const pasteEventListener = async (event: ClipboardEvent) => {
-  const selectedCellsStore = useSelectedCellsStore()
+  const documentStore = useDocumentStore()
   // 如果有单元格正在编辑，不处理粘贴事件
-  if (selectedCellsStore.editingCell || !selectedCellsStore.selectedCells.length) {
+  if (documentStore.editingCell || !documentStore.selectedCells.length) {
     return
   }
 
@@ -103,23 +103,23 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
       }
     }
 
-    if (clipboardText && selectedCellsStore.selectedCells.length > 0) {
+    if (clipboardText && documentStore.selectedCells.length > 0) {
       // 将剪贴板内容填入所有选定的单元格
       if(!clipboardText.isGrid){
         console.log(clipboardText.gridData)
-        selectedCellsStore.selectedCells.map(it =>
-          lookupCellData(selectedCellsStore.gridData, it)!
+        documentStore.selectedCells.map(it =>
+          lookupCellData(documentStore.gridData, it)!
         ).forEach(cell => {
             cell.text = clipboardText.original
         })
       } else {
         // 将gridText填入选定的单元格
-        const selectedCells = selectedCellsStore.selectedCells
+        const selectedCells = documentStore.selectedCells
 
         const startCell = selectedCells[0]
         const startCellParts = startCell.split('>').map(it => JSON.parse(it) as [number, number])
         const [startRow, startCol] = startCellParts.pop()!
-        const parentGrid: CellData[][] = lookupInnerGrid(selectedCellsStore.gridData, startCellParts)
+        const parentGrid: CellData[][] = lookupInnerGrid(documentStore.gridData, startCellParts)
         if (selectedCells.length === 1) {
           // 单个单元格：以该单元格为起点填充表格数据
           clipboardText.gridData.forEach((rowData, rowIndex) => {
@@ -134,7 +134,7 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
               }
 
               const cellPath = startCellParts.concat([[targetRow, targetCol]])
-              const cell = lookupCellData(selectedCellsStore.gridData, cellPath)
+              const cell = lookupCellData(documentStore.gridData, cellPath)
               if (cell) {
                 copyCellData(cellData, cell)
               }
@@ -145,7 +145,7 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
           if(clipboardText.gridData.length === 1 && clipboardText.gridData[0].length === 1){
             // 如果gridText只有一个单元格，那么将其复制到所有选定的单元格
             const cellData = clipboardText.gridData[0][0]
-            selectedCells.map(cellPath => lookupCellData(selectedCellsStore.gridData, cellPath)).filter(Boolean).forEach(cell => {
+            selectedCells.map(cellPath => lookupCellData(documentStore.gridData, cellPath)).filter(Boolean).forEach(cell => {
               copyCellData(cellData, cell!)
             })
           }else{
@@ -158,7 +158,7 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
                 if(!selectedCells.includes(cellPath)){
                   return
                 }
-                const cell = lookupCellData(selectedCellsStore.gridData, cellPath)
+                const cell = lookupCellData(documentStore.gridData, cellPath)
                 if (cell) {
                   cellData.id = nanoid()
                   copyCellData(cellData, cell)
@@ -176,42 +176,42 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
 }
 
 export const copyEventListener = async (event: ClipboardEvent) => {
-  const selectedCellsStore = useSelectedCellsStore()
+  const documentStore = useDocumentStore()
 
   // 如果有单元格正在编辑，不处理复制事件
-  if (selectedCellsStore.editingCell || !selectedCellsStore.selectedCells.length) {
+  if (documentStore.editingCell || !documentStore.selectedCells.length) {
     return
   }
 
   // 阻止默认复制行为
   event.preventDefault()
-  
+
   const { plainText, htmlText } = getClipboardData()
   await writeToClipboard(event, plainText, htmlText)
-  
+
   console.log('已复制到剪贴板:', plainText)
 }
 
 export const cutEventListener = async (event: ClipboardEvent) => {
-  const selectedCellsStore = useSelectedCellsStore()
+  const documentStore = useDocumentStore()
 
   // 如果有单元格正在编辑，不处理剪切事件
-  if (selectedCellsStore.editingCell || !selectedCellsStore.selectedCells.length) {
+  if (documentStore.editingCell || !documentStore.selectedCells.length) {
     return
   }
 
   // 阻止默认剪切行为
   event.preventDefault()
-  
+
   const { plainText, htmlText } = getClipboardData()
   const success = await writeToClipboard(event, plainText, htmlText)
-  
+
   if (success) {
     console.log('已剪切到剪贴板:', plainText)
 
     // 清空选中的单元格内容（剪切操作）
-    selectedCellsStore.selectedCells.forEach(cellPath => {
-      const cell = lookupCellData(selectedCellsStore.gridData, cellPath)
+    documentStore.selectedCells.forEach(cellPath => {
+      const cell = lookupCellData(documentStore.gridData, cellPath)
       if (cell) {
         cell.text = ''
         cell.innerGrid = undefined

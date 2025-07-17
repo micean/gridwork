@@ -1,7 +1,9 @@
 import { defineStore } from 'pinia'
-import { computed, ref } from 'vue'
+import { ref } from 'vue'
 import emitter from "@/utils/bus.ts";
-import type { CellData } from '../../env'
+import type { CellData, DocumentData } from '../../env'
+import { nanoid } from '@/utils/data.ts'
+import { DOCUMENTS_STORE, type IndexedDBManager } from '@/utils/db.ts'
 
 const compareCellPath = (startCellParts: string[], endCellParts: string[], length: number) => {
   if(length === 1) return length;
@@ -38,8 +40,11 @@ const clearDocumentFocus = () => {
   }
 }
 
-export const useSelectedCellsStore = defineStore('selectedCells', () => {
+export const useDocumentStore = defineStore('document', () => {
+  const id = ref<string>(nanoid())
+  const title = ref<string>('')
   const gridData = ref<CellData[][]>([])
+  const createdAt = ref<string>(new Date().toUTCString())
   const selectedCells = ref<string[]>([])
   const editingCell = ref<string | null>(null)
   const mouseCells = ref<{
@@ -49,8 +54,44 @@ export const useSelectedCellsStore = defineStore('selectedCells', () => {
     oldSelectedCells?: string[]
   }>({})
 
+  const loadDoc = (doc: DocumentData) => {
+    id.value = doc.id
+    title.value = doc.name
+    createdAt.value = doc.createdAt
+    setupGrid(doc.gridData)
+  }
+
   const setupGrid = (data: CellData[][]) => {
     gridData.value = data
+  }
+
+  const updateDocumentName = (name: string) => {
+    title.value = name
+  }
+
+  const getDocument = (): DocumentData => {
+    return {
+      id: id.value,
+      name: title.value,
+      gridData: JSON.parse(JSON.stringify(gridData.value)),
+      createdAt: createdAt.value,
+      updatedAt: new Date().toUTCString(),
+    }
+  }
+
+  const saveDocument = async (dbManager: IndexedDBManager | null) => {
+    try {
+      const doc = getDocument();
+      const documentId = await dbManager?.put(DOCUMENTS_STORE, doc)
+      if(documentId){
+        console.log('文档保存成功', documentId, doc)
+        localStorage.setItem('lastDocumentId', documentId.toString())
+      }
+      return documentId
+    } catch (error) {
+      console.error('保存项目失败:', error)
+      throw error
+    }
   }
 
   const addCellOnClick = (cell: string) => {
@@ -206,10 +247,16 @@ export const useSelectedCellsStore = defineStore('selectedCells', () => {
   }
 
   return {
+    id,
+    title,
     gridData,
     selectedCells,
     editingCell,
+    loadDoc,
     setupGrid,
+    updateDocumentName,
+    getDocument,
+    saveDocument,
     addCellOnClick,
     removeCell,
     toggleCell,

@@ -12,133 +12,179 @@
     box-shadow: 0 2px 4px rgba(0, 0, 0, 0.12);
     flex-shrink: 0;
     display: flex;
-    justify-content: center;
+    justify-content: space-between;
     align-items: center;
+    padding: 0 20px;
 
-    .toolbar {
-      display: flex;
-      gap: 10px;
+    .header-left {
 
-      i {
-        cursor: pointer;
+      .document-name-container {
         display: flex;
-        width: 30px;
-        height: 30px;
-        justify-content: center;
         align-items: center;
-        border-radius: 15px;
 
-        &:hover {
-          background-color: #f0f0f0;
-        }
-      }
+        .document-name {
+          font-size: 16px;
+          font-weight: 500;
+          color: #333;
+          cursor: pointer;
+          padding: 4px 8px;
+          border-radius: 4px;
+          transition: background-color 0.2s;
+          user-select: none;
+          display: block;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          white-space: nowrap;
 
-      .font-size-popup {
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        margin-top: 8px;
-        z-index: 1000;
-
-        .popup-content {
-          background-color: white;
-          border-radius: 8px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-          width: 200px;
-          max-width: 90vw;
-
-          .popup-body {
-            padding: 15px;
+          &:hover {
+            background-color: #f0f0f0;
           }
         }
       }
 
-      /* 颜色选择器样式已移至 ColorPicker.vue */
-      .search-popup {
-        position: absolute;
-        top: 100%;
-        left: 50%;
-        transform: translateX(-50%);
-        margin-top: 8px;
-        z-index: 1000;
+      .document-name-input {
+        font-size: 16px;
+        font-weight: 500;
+        padding: 4px 8px;
+        border: 1px solid #ddd;
+        border-radius: 4px;
+        outline: none;
+        width: 400px;
 
-        .popup-content {
-          background-color: white;
-          border-radius: 8px;
-          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
-          width: 200px;
-          max-width: 90vw;
-
-          .popup-body {
-            padding: 15px;
-
-            .search-input-wrapper {
-              position: relative;
-              display: flex;
-              align-items: center;
-
-              .search-icon {
-                position: absolute;
-                left: 12px;
-                width: 16px;
-                height: 16px;
-                color: #9ca3af;
-                pointer-events: none;
-              }
-
-              .search-input {
-                width: 100%;
-                padding: 8px 30px 8px 32px;
-                font-size: 14px;
-                border: 1px solid #e0e0e0;
-                border-radius: 4px;
-                outline: none;
-                transition: all 0.2s ease;
-
-                &:focus {
-                  border-color: #3b82f6;
-                  box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
-                }
-
-                &::placeholder {
-                  color: #9ca3af;
-                }
-              }
-
-              .clear-button {
-                display: flex;
-                position: absolute;
-                right: 8px;
-                background: none;
-                border: none;
-                padding: 2px;
-                cursor: pointer;
-                color: #9ca3af;
-                transition: color 0.2s ease;
-
-                &:hover {
-                  color: #374151;
-                }
-
-                svg {
-                  width: 14px;
-                  height: 14px;
-                }
-              }
-            }
-          }
+        &:focus {
+          border-color: #3498db;
+          box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2);
         }
       }
 
-      i.disabled {
-        pointer-events: none;
-        opacity: 0.3;
-      }
+    }
 
-      i.active {
-        background-color: #e0e0e0;
-      }
+    .header-right {
+      //.toolbar {
+      //  display: flex;
+      //  gap: 10px;
+      //
+      //  i {
+      //    cursor: pointer;
+      //    display: flex;
+      //    width: 30px;
+      //    height: 30px;
+      //    justify-content: center;
+      //    align-items: center;
+      //    border-radius: 15px;
+      //
+      //    &:hover {
+      //      background-color: #f0f0f0;
+      //    }
+      //  }
+      //
+      //  .font-size-popup {
+      //    position: absolute;
+      //    top: 100%;
+      //    left: 50%;
+      //    transform: translateX(-50%);
+      //    margin-top: 8px;
+      //    z-index: 1000;
+      //
+      //    .popup-content {
+      //      background-color: white;
+      //      border-radius: 8px;
+      //      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      //      width: 200px;
+      //      max-width: 90vw;
+      //
+      //      .popup-body {
+      //        padding: 15px;
+      //      }
+      //    }
+      //  }
+      //
+      //  /* 颜色选择器样式已移至 ColorPicker.vue */
+      //  .search-popup {
+      //    position: absolute;
+      //    top: 100%;
+      //    left: 50%;
+      //    transform: translateX(-50%);
+      //    margin-top: 8px;
+      //    z-index: 1000;
+      //
+      //    .popup-content {
+      //      background-color: white;
+      //      border-radius: 8px;
+      //      box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+      //      width: 200px;
+      //      max-width: 90vw;
+      //
+      //      .popup-body {
+      //        padding: 15px;
+      //
+      //        .search-input-wrapper {
+      //          position: relative;
+      //          display: flex;
+      //          align-items: center;
+      //
+      //          .search-icon {
+      //            position: absolute;
+      //            left: 12px;
+      //            width: 16px;
+      //            height: 16px;
+      //            color: #9ca3af;
+      //            pointer-events: none;
+      //          }
+      //
+      //          .search-input {
+      //            width: 100%;
+      //            padding: 8px 30px 8px 32px;
+      //            font-size: 14px;
+      //            border: 1px solid #e0e0e0;
+      //            border-radius: 4px;
+      //            outline: none;
+      //            transition: all 0.2s ease;
+      //
+      //            &:focus {
+      //              border-color: #3b82f6;
+      //              box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.1);
+      //            }
+      //
+      //            &::placeholder {
+      //              color: #9ca3af;
+      //            }
+      //          }
+      //
+      //          .clear-button {
+      //            display: flex;
+      //            position: absolute;
+      //            right: 8px;
+      //            background: none;
+      //            border: none;
+      //            padding: 2px;
+      //            cursor: pointer;
+      //            color: #9ca3af;
+      //            transition: color 0.2s ease;
+      //
+      //            &:hover {
+      //              color: #374151;
+      //            }
+      //
+      //            svg {
+      //              width: 14px;
+      //              height: 14px;
+      //            }
+      //          }
+      //        }
+      //      }
+      //    }
+      //  }
+      //
+      //  i.disabled {
+      //    pointer-events: none;
+      //    opacity: 0.3;
+      //  }
+      //
+      //  i.active {
+      //    background-color: #e0e0e0;
+      //  }
+      //}
     }
   }
 

@@ -1,0 +1,703 @@
+<template>
+  <div class="toolbar">
+    <i
+      title="向上增加一行"
+      @click="addRowCol('top')"
+      :class="{ disabled: !canAddRowCol }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M12 13C14.7614 13 17 15.2386 17 18C17 20.7614 14.7614 23 12 23C9.23858 23 7 20.7614 7 18C7 15.2386 9.23858 13 12 13ZM13 15H11V16.999L9 17V19L11 18.999V21H13V18.999L15 19V17L13 16.999V15ZM20 3C20.5523 3 21 3.44772 21 4V10C21 10.5523 20.5523 11 20 11H4C3.44772 11 3 10.5523 3 10V4C3 3.44772 3.44772 3 4 3H20ZM5 5V9H19V5H5Z"
+        ></path>
+      </svg>
+    </i>
+    <i
+      title="向下增加一行"
+      @click="addRowCol('bottom')"
+      :class="{ disabled: !canAddRowCol }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M20 13C20.5523 13 21 13.4477 21 14V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V14C3 13.4477 3.44772 13 4 13H20ZM19 15H5V19H19V15ZM12 1C14.7614 1 17 3.23858 17 6C17 8.76142 14.7614 11 12 11C9.23858 11 7 8.76142 7 6C7 3.23858 9.23858 1 12 1ZM13 3H11V4.999L9 5V7L11 6.999V9H13V6.999L15 7V5L13 4.999V3Z"
+        ></path>
+      </svg>
+    </i>
+    <i
+      title="向左增加一列"
+      @click="addRowCol('left')"
+      :class="{ disabled: !canAddRowCol }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M10 3C10.5523 3 11 3.44772 11 4V20C11 20.5523 10.5523 21 10 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3H10ZM9 5H5V19H9V5ZM18 7C20.7614 7 23 9.23858 23 12C23 14.7614 20.7614 17 18 17C15.2386 17 13 14.7614 13 12C13 9.23858 15.2386 7 18 7ZM19 9H17V10.999L15 11V13L17 12.999V15H19V12.999L21 13V11L19 10.999V9Z"
+        ></path>
+      </svg>
+    </i>
+    <i
+      title="向右增加一列"
+      @click="addRowCol('right')"
+      :class="{ disabled: !canAddRowCol }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M20 3C20.5523 3 21 3.44772 21 4V20C21 20.5523 20.5523 21 20 21H14C13.4477 21 13 20.5523 13 20V4C13 3.44772 13.4477 3 14 3H20ZM19 5H15V19H19V5ZM6 7C8.76142 7 11 9.23858 11 12C11 14.7614 8.76142 17 6 17C3.23858 17 1 14.7614 1 12C1 9.23858 3.23858 7 6 7ZM7 9H5V10.999L3 11V13L5 12.999V15H7V12.999L9 13V11L7 10.999V9Z"
+        ></path>
+      </svg>
+    </i>
+    <i
+      title="删除行"
+      @click="removeRowCol('row')"
+      :class="{ disabled: !hasSelection }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M20 5C20.5523 5 21 5.44772 21 6V12C21 12.5523 20.5523 13 20 13C20.628 13.8355 21 14.8743 21 16C21 18.7614 18.7614 21 16 21C13.2386 21 11 18.7614 11 16C11 14.8743 11.372 13.8355 11.9998 12.9998L4 13C3.44772 13 3 12.5523 3 12V6C3 5.44772 3.44772 5 4 5H20ZM13 15V17H19V15H13ZM19 7H5V11H19V7Z"
+        ></path>
+      </svg>
+    </i>
+    <i
+      title="删除列"
+      @click="removeRowCol('col')"
+      :class="{ disabled: !hasSelection }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M12 3C12.5523 3 13 3.44772 13 4L12.9998 11.9998C13.8355 11.372 14.8743 11 16 11C18.7614 11 21 13.2386 21 16C21 18.7614 18.7614 21 16 21C14.9681 21 14.0092 20.6874 13.2129 20.1518L13 20C13 20.5523 12.5523 21 12 21H6C5.44772 21 5 20.5523 5 20V4C5 3.44772 5.44772 3 6 3H12ZM11 5H7V19H11V5ZM19 15H13V17H19V15Z"
+        ></path>
+      </svg>
+    </i>
+    <i
+      title="插入子级"
+      @click="insertChild"
+      :class="{ disabled: !hasSelection }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M21 3C21.5523 3 22 3.44772 22 4V11H20V5H4V19H10V21H3C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3H21ZM21 13C21.5523 13 22 13.4477 22 14V20C22 20.5523 21.5523 21 21 21H13C12.4477 21 12 20.5523 12 20V14C12 13.4477 12.4477 13 13 13H21ZM20 15H14V19H20V15Z"
+        ></path>
+      </svg>
+    </i>
+    <i
+      title="调整内部布局"
+      @click="toggleLayout"
+      :class="{ disabled: !hasSelection }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M21 20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3H20C20.5523 3 21 3.44772 21 4V20ZM11 5H5V19H11V5ZM19 13H13V19H19V13ZM19 5H13V11H19V5Z"
+        ></path>
+      </svg>
+    </i>
+    <i
+      title="字体大小"
+      @click="toggleFontSizePopup"
+      :class="{ disabled: !hasSelection }"
+      style="position: relative"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M11.246 15H4.75416L2.75416 20H0.600098L7.0001 4H9.0001L15.4001 20H13.246L11.246 15ZM10.446 13L8.0001 6.88516L5.55416 13H10.446ZM21.0001 12.5351V12H23.0001V20H21.0001V19.4649C20.4118 19.8052 19.7287 20 19.0001 20C16.791 20 15.0001 18.2091 15.0001 16C15.0001 13.7909 16.791 12 19.0001 12C19.7287 12 20.4118 12.1948 21.0001 12.5351ZM19.0001 18C20.1047 18 21.0001 17.1046 21.0001 16C21.0001 14.8954 20.1047 14 19.0001 14C17.8955 14 17.0001 14.8954 17.0001 16C17.0001 17.1046 17.8955 18 19.0001 18Z"
+        ></path>
+      </svg>
+
+      <!-- 字体大小弹出层 -->
+      <div
+        v-if="vars.showFontSizePopup"
+        class="font-size-popup"
+        @click="(e) => e.stopPropagation()"
+      >
+        <div class="popup-content">
+          <div class="popup-body">
+            <Slider
+              :model-value="vars.fontSize"
+              :min="13"
+              :max="22"
+              :step="1"
+              :show-labels="true"
+              :show-tooltip="true"
+              :format="(value) => `${value}px`"
+              @change="handleFontSizeChange"
+            />
+          </div>
+        </div>
+      </div>
+    </i>
+    <i
+      title="颜色"
+      @click="toggleColorPopup"
+      :class="{ disabled: !hasSelection }"
+      style="position: relative"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M16.5357 15.9465L18.657 13.8252L15.475 10.6432L19.0106 7.10768L16.8892 4.98636L13.3537 8.52189L10.1717 5.33991L8.05041 7.46123L16.5357 15.9465ZM15.1215 17.3607L6.6362 8.87544L3.80777 11.7039L12.293 20.1892L15.1215 17.3607ZM13.3537 5.69346L16.1821 2.86504C16.5727 2.47451 17.2058 2.47451 17.5963 2.86504L21.1319 6.40057C21.5224 6.79109 21.5224 7.42426 21.1319 7.81478L18.3035 10.6432L20.7783 13.1181C21.1689 13.5086 21.1689 14.1418 20.7783 14.5323L13.0002 22.3105C12.6096 22.701 11.9765 22.701 11.5859 22.3105L1.68645 12.411C1.29592 12.0205 1.29592 11.3873 1.68645 10.9968L9.46462 3.21859C9.85515 2.82807 10.4883 2.82807 10.8788 3.21859L13.3537 5.69346Z"
+        ></path>
+      </svg>
+
+      <ColorPicker :model-value="vars.showColorPopup" @select-color="handleColorSelect" />
+    </i>
+    <i
+      title="搜索"
+      @click="toggleSearchPopup"
+      :class="{ active: vars.showSearchPopup }"
+      style="position: relative"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="currentColor"
+      >
+        <path
+          d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.032 20 2 15.968 2 11C2 6.032 6.032 2 11 2C15.968 2 20 6.032 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.0247 15.8748C17.2475 14.6146 18 12.8956 18 11C18 7.1325 14.8675 4 11 4C7.1325 4 4 7.1325 4 11C4 14.8675 7.1325 18 11 18C12.8956 18 14.6146 17.2475 15.8748 16.0247L16.0247 15.8748Z"
+        ></path>
+      </svg>
+
+      <!-- 搜索弹出层 -->
+      <div v-if="vars.showSearchPopup" class="search-popup" @click="(e) => e.stopPropagation()">
+        <div class="popup-content">
+          <div class="popup-body">
+            <div class="search-input-wrapper">
+              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                <circle cx="11" cy="11" r="8"></circle>
+                <path d="m21 21-4.35-4.35"></path>
+              </svg>
+              <input
+                v-model="vars.searchQuery"
+                type="text"
+                class="search-input"
+                placeholder="搜索..."
+                @input="searchStore.setSearchQuery(($event.target as HTMLInputElement).value || '')"
+                @focus="() => documentStore.clearSelection()"
+                @keyup.esc="toggleSearchPopup"
+                @keyup.enter="toggleSearchPopup"
+              />
+              <button v-if="vars.searchQuery" class="clear-button" @click="clearSearch">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </i>
+    <i
+      title="保存"
+      @click="handleSave"
+    >
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
+        <path d="M18 19H19V6.82843L17.1716 5H16V9H7V5H5V19H6V12H18V19ZM4 3H18L20.7071 5.70711C20.8946 5.89464 21 6.149 21 6.41421V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3ZM8 14V19H16V14H8Z"></path>
+      </svg>
+    </i>
+    <i
+      title="求和"
+      @click="handleSummation"
+      :class="{ disabled: !summable }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path d="M5 18L12.6796 12L5 6V4H19V6H8.26348L16 12L8.26348 18H19V20H5V18Z"></path>
+      </svg>
+    </i>
+    <i
+      title="撤消"
+      @click="handleUndo"
+      :class="{ disabled: !historyStore.canUndo }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="currentColor"
+      >
+        <path
+          d="M5.82843 6.99955L8.36396 9.53509L6.94975 10.9493L2 5.99955L6.94975 1.0498L8.36396 2.46402L5.82843 4.99955H13C17.4183 4.99955 21 8.58127 21 12.9996C21 17.4178 17.4183 20.9996 13 20.9996H4V18.9996H13C16.3137 18.9996 19 16.3133 19 12.9996C19 9.68584 16.3137 6.99955 13 6.99955H5.82843Z"
+        ></path>
+      </svg>
+    </i>
+    <i
+      title="重做"
+      @click="handleRedo"
+      :class="{ disabled: !historyStore.canRedo }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="currentColor"
+      >
+        <path
+          d="M18.1716 6.99955H11C7.68629 6.99955 5 9.68584 5 12.9996C5 16.3133 7.68629 18.9996 11 18.9996H20V20.9996H11C6.58172 20.9996 3 17.4178 3 12.9996C3 8.58127 6.58172 4.99955 11 4.99955H18.1716L15.636 2.46402L17.0503 1.0498L22 5.99955L17.0503 10.9493L15.636 9.53509L18.1716 6.99955Z"
+        ></path>
+      </svg>
+    </i>
+  </div>
+</template>
+
+<script setup lang="ts">
+import Slider from './Slider.vue'
+import ColorPicker from './ColorPicker.vue'
+import { computed, nextTick, ref, watch } from 'vue'
+import { useDocumentStore } from '@/stores/document.ts'
+import type { CellData, DocumentData } from '../../env'
+import { createCellData, createRowData, lookupCellData, lookupInnerGrid, nanoid } from '@/utils/data.ts'
+import emitter from '@/utils/bus.ts'
+import { useSearchStore } from '@/stores/search.ts'
+import { useHistoryStore } from '@/stores/history.ts'
+import { DOCUMENTS_STORE, getDBManager } from '@/utils/db.ts'
+
+defineExpose({
+  closePopup: (dialog: 'fontSize' | 'color' | 'search') => {
+    if (dialog === 'fontSize') {
+      vars.value.showFontSizePopup = false
+    } else if (dialog === 'color') {
+      vars.value.showColorPopup = false
+    } else if (dialog === 'search') {
+      vars.value.showSearchPopup = false
+    }
+  }
+})
+
+const vars = ref({
+  fontSize: 13,
+  showFontSizePopup: false,
+  showColorPopup: false,
+  showSearchPopup: false,
+  searchQuery: '',
+});
+const documentStore = useDocumentStore()
+const historyStore = useHistoryStore()
+const searchStore = useSearchStore()
+
+const dbManager = getDBManager();
+
+const canAddRowCol = computed(() => {
+  return documentStore.selectedCells.length === 1
+})
+const hasSelection = computed(() => {
+  return documentStore.selectedCells.length > 0
+})
+const summable = computed(() => {
+  const [rowSize, colSize] = documentStore.countSelectedRowColSize()
+  return (rowSize === 1 && colSize > 2) || (rowSize > 2 && colSize === 1)
+})
+
+
+// 监听数据变化，记录历史（排除编辑中的数据）
+watch(
+  () => documentStore.gridData,
+  (newData) => {
+    // 如果有单元格正在编辑，不记录历史
+    if (documentStore.editingCell) {
+      return
+    }
+    historyStore.addHistory(JSON.stringify(newData), documentStore.selectedCells)
+  },
+  { deep: true },
+)
+watch(
+  () => vars.value.showSearchPopup,
+  (newData) => {
+    searchStore.setSearchVisible(newData)
+  },
+)
+watch(
+  () => vars.value.searchQuery,
+  (newText) => {
+    searchStore.setSearchQuery(newText)
+  },
+)
+
+
+const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
+  if (documentStore.selectedCells.length !== 1) return
+
+  let originCellPath = documentStore.selectedCells[0]
+  const parts = originCellPath.split('>').map((it) => JSON.parse(it))
+  const [row, col] = parts.pop()
+  const parentGrid: CellData[][] = lookupInnerGrid(documentStore.gridData, parts)
+
+  switch (edge) {
+    case 'top':
+      parentGrid.splice(row, 0, createRowData(parentGrid[0].length))
+      originCellPath = parts.length
+        ? `${parts.join('>')}>[${row + 1},${col}]`
+        : `[${row + 1},${col}]`
+      break
+    case 'bottom':
+      parentGrid.splice(row + 1, 0, createRowData(parentGrid[0].length))
+      break
+    case 'left':
+      parentGrid.forEach((eachRow) => {
+        eachRow.splice(col, 0, createCellData())
+      })
+      originCellPath = parts.length
+        ? `${parts.join('>')}>[${row},${col + 1}]`
+        : `[${row},${col + 1}]`
+      break
+    case 'right':
+      parentGrid.forEach((eachRow) => {
+        eachRow.splice(col + 1, 0, createCellData())
+      })
+      break
+  }
+  documentStore.addCellOnClick(originCellPath)
+}
+
+const removeRowCol = (type: 'row' | 'col') => {
+  if (!documentStore.selectedCells.length) return
+
+  const posArr = documentStore.selectedCells.map((path) => {
+    const parts: [number, number][] = path.split('>').map((it) => JSON.parse(it))
+    const pos: [number, number] = parts.pop()!
+    return { parts, pos }
+  })
+  const parentCell = posArr[0].parts.length
+    ? lookupCellData(documentStore.gridData, posArr[0].parts)
+    : undefined
+  const parentGrid: CellData[][] = lookupInnerGrid(documentStore.gridData, posArr[0].parts)
+
+  switch (type) {
+    case 'row':
+      posArr
+        .map((it) => it.pos[0])
+        .filter((e, i, self) => i === self.indexOf(e))
+        .sort()
+        .forEach((row, index) => {
+          parentGrid.splice(row - index, 1)
+        })
+      if (parentGrid.length === 0) {
+        if (parentCell) {
+          parentCell.innerGrid = undefined
+        } else {
+          parentGrid.push(createRowData(1))
+        }
+      }
+      break
+    case 'col':
+      posArr
+        .map((it) => it.pos[1])
+        .filter((e, i, self) => i === self.indexOf(e))
+        .sort()
+        .forEach((col, index) => {
+          parentGrid.forEach((row) => row.splice(col - index, 1))
+        })
+      if (parentGrid[0]?.length === 0) {
+        if (parentCell) {
+          parentCell.innerGrid = undefined
+        } else {
+          parentGrid.splice(0, parentGrid.length)
+          parentGrid.push(createRowData(1))
+        }
+      }
+      break
+  }
+
+  // 清除选中状态，因为删除后原位置可能不存在
+  documentStore.clearSelection()
+}
+
+const insertChild = () => {
+  if (!documentStore.selectedCells.length) return
+  if (documentStore.selectedCells.length === 1) {
+    const path = documentStore.selectedCells[0]
+    emitter.emit('cell-inner', { path })
+  } else if (documentStore.selectedCells.length > 1) {
+    const path = documentStore.selectedCells[0]
+    emitter.emit('cell-inner', { path, gridPath: documentStore.selectedCells })
+  }
+}
+
+const toggleLayout = () => {
+  if (!documentStore.selectedCells.length) return
+
+  documentStore.selectedCells.forEach((it) => {
+    const cell = lookupCellData(documentStore.gridData, it)!
+    cell.flexDirection = !cell.flexDirection || cell.flexDirection === 'column' ? 'row' : 'column'
+  })
+}
+
+const toggleFontSizePopup = () => {
+  if (documentStore.selectedCells.length) {
+    const firstCell = lookupCellData(
+      documentStore.gridData,
+      documentStore.selectedCells[0],
+    )
+    vars.value.fontSize = firstCell?.fontSize || 13
+    vars.value.showFontSizePopup = !vars.value.showFontSizePopup
+  }
+}
+
+const handleFontSizeChange = (fontSize: number) => {
+  if (!documentStore.selectedCells.length) return
+  documentStore.selectedCells
+    .map((it) => lookupCellData(documentStore.gridData, it)!)
+    .forEach((cell) => {
+      cell.fontSize = fontSize
+    })
+}
+
+const toggleColorPopup = () => {
+  if (documentStore.selectedCells.length) {
+    vars.value.showColorPopup = !vars.value.showColorPopup
+  }
+}
+
+const handleColorSelect = (color: string) => {
+  if (!documentStore.selectedCells.length) return
+
+  documentStore.selectedCells
+    .map((it) => lookupCellData(documentStore.gridData, it)!)
+    .forEach((cell) => {
+      cell.backgroundColor = color
+    })
+
+  // 选择颜色后关闭弹窗
+  vars.value.showColorPopup = false
+}
+
+const toggleSearchPopup = () => {
+  vars.value.showSearchPopup = !vars.value.showSearchPopup
+  if (vars.value.showSearchPopup) {
+    nextTick(() => {
+      const searchInput = document.querySelector('.search-popup input') as HTMLInputElement
+      searchInput?.focus()
+      searchInput?.select()
+    })
+  }
+}
+
+const clearSearch = () => {
+  vars.value.searchQuery = ''
+  searchStore.clearSearchQuery()
+  const searchInput = document.querySelector('.search-popup input') as HTMLInputElement
+  searchInput?.focus()
+}
+
+const handleSave = async () => {
+  await documentStore.saveDocument(dbManager)
+}
+
+const handleSummation = () => {
+  if (!summable.value) return
+
+  const cells = documentStore.selectedCells.map(
+    (it) => lookupCellData(documentStore.gridData, it)!,
+  )
+  const lastCell = cells.pop()!
+  const sum = cells
+    .map((it) => it.text)
+    .filter((it) => !it || /^\-?\d+(\.\d+)?$/.test(it))
+    .map((it) => Number(it || 0))
+    .reduce((a, b) => a + b, 0)
+  lastCell.text = sum.toString()
+}
+
+const handleUndo = () => {
+  const previousData = historyStore.undo()
+  if (previousData) {
+    documentStore.setupGrid(JSON.parse(previousData.gridData))
+    documentStore.setSelectedCells(previousData.selectedCells || [])
+  }
+}
+
+const handleRedo = () => {
+  const nextData = historyStore.redo()
+  if (nextData) {
+    documentStore.setupGrid(JSON.parse(nextData.gridData))
+    documentStore.setSelectedCells(nextData.selectedCells || [])
+  }
+}
+</script>
+
+<style scoped lang="scss">
+.toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+
+  i {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 32px;
+    height: 32px;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    color: #666;
+
+    &:hover:not(.disabled) {
+      background-color: #f0f0f0;
+      color: #333;
+    }
+
+    &.disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+    }
+
+    &.active {
+      background-color: #e6f7ff;
+      color: #1890ff;
+    }
+  }
+}
+
+.font-size-popup {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  margin-top: 8px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 200px;
+}
+
+.popup-content {
+  padding: 12px;
+}
+
+.popup-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.search-popup {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 4px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  min-width: 300px;
+}
+
+.search-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
+.search-icon {
+  position: absolute;
+  left: 8px;
+  width: 16px;
+  height: 16px;
+  color: #999;
+  pointer-events: none;
+}
+
+.search-input {
+  width: 100%;
+  padding: 8px 8px 8px 32px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 14px;
+  outline: none;
+
+  &:focus {
+    border-color: #40a9ff;
+    box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  }
+}
+
+.clear-button {
+  position: absolute;
+  right: 8px;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  padding: 2px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  &:hover {
+    color: #666;
+  }
+
+  svg {
+    width: 14px;
+    height: 14px;
+  }
+}
+</style>

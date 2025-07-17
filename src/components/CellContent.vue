@@ -2,7 +2,7 @@
 import {computed, ref, useTemplateRef, onMounted, onUnmounted, watch, nextTick} from 'vue'
 import type { CellData } from '../../env'
 import TableComponent from '@/components/TableComponent.vue'
-import { useSelectedCellsStore } from '@/stores/selectedCells.ts'
+import { useDocumentStore } from '@/stores/document.ts'
 import {isCursorAtHead, isCursorAtTail, selectionOnTail} from '@/utils/edit.ts'
 import { createGridData, pickGridData } from '@/utils/data.ts'
 import emitter from '@/utils/bus.ts'
@@ -21,15 +21,15 @@ const vars = ref({
 const props = withDefaults(defineProps<Props>(), {
   path: '',
 })
-const selectedCellsStore = useSelectedCellsStore()
+const documentStore = useDocumentStore()
 const searchStore = useSearchStore()
 const cellInput = useTemplateRef('cellInput')
 
 const isCellSelected = computed(() => {
-  return selectedCellsStore.isCellSelected(props.path)
+  return documentStore.isCellSelected(props.path)
 })
 const isEditing = computed(() => {
-  return selectedCellsStore.isEditingCell(props.path)
+  return documentStore.isEditingCell(props.path)
 })
 
 watch(() => model.value.text, (newText) => {
@@ -41,26 +41,26 @@ watch(() => model.value.text, (newText) => {
 
 const nonTopBorder = computed(() => {
   return (
-    selectedCellsStore.isCellSelected(props.path) &&
-    !selectedCellsStore.selectedBorder(props.path, 'top')
+    documentStore.isCellSelected(props.path) &&
+    !documentStore.selectedBorder(props.path, 'top')
   )
 })
 const nonBottomBorder = computed(() => {
   return (
-    selectedCellsStore.isCellSelected(props.path) &&
-    !selectedCellsStore.selectedBorder(props.path, 'bottom')
+    documentStore.isCellSelected(props.path) &&
+    !documentStore.selectedBorder(props.path, 'bottom')
   )
 })
 const nonLeftBorder = computed(() => {
   return (
-    selectedCellsStore.isCellSelected(props.path) &&
-    !selectedCellsStore.selectedBorder(props.path, 'left')
+    documentStore.isCellSelected(props.path) &&
+    !documentStore.selectedBorder(props.path, 'left')
   )
 })
 const nonRightBorder = computed(() => {
   return (
-    selectedCellsStore.isCellSelected(props.path) &&
-    !selectedCellsStore.selectedBorder(props.path, 'right')
+    documentStore.isCellSelected(props.path) &&
+    !documentStore.selectedBorder(props.path, 'right')
   )
 })
 
@@ -76,7 +76,7 @@ const handleInput = (event: Event) => {
 
 const handleBlur = () => {
   window.getSelection()?.removeAllRanges()
-  selectedCellsStore.setEditingCell(null)
+  documentStore.setEditingCell(null)
   vars.value.content = model.value.text
   window.dispatchEvent(new CustomEvent('editor-blur', { detail: { path: props.path } }))
 }
@@ -95,28 +95,28 @@ const handleInputArrow = (event: Event, direction: 'up' | 'down' | 'left' | 'rig
       if(isCursorAtHead(target)){
         event.preventDefault()
         event.stopPropagation()
-        selectedCellsStore.focusAnotherCell('up', true)
+        documentStore.focusAnotherCell('up', true)
       }
       break
     case 'down':
       if(isCursorAtTail(target)){
         event.preventDefault()
         event.stopPropagation()
-        selectedCellsStore.focusAnotherCell('down', true)
+        documentStore.focusAnotherCell('down', true)
       }
       break
     case 'left':
       if(isCursorAtHead(target)){
         event.preventDefault()
         event.stopPropagation()
-        selectedCellsStore.focusAnotherCell('left', true)
+        documentStore.focusAnotherCell('left', true)
       }
       break
     case 'right':
       if(isCursorAtTail(target)){
         event.preventDefault()
         event.stopPropagation()
-        selectedCellsStore.focusAnotherCell('right', true)
+        documentStore.focusAnotherCell('right', true)
       }
       break
   }
@@ -124,10 +124,10 @@ const handleInputArrow = (event: Event, direction: 'up' | 'down' | 'left' | 'rig
 
 const detectMouseEdit = (event: Event) => {
   if (isCellSelected.value) {
-    selectedCellsStore.setEditingCell(props.path)
+    documentStore.setEditingCell(props.path)
     event.stopPropagation()
-    selectedCellsStore.addCellOnClick(props.path)
-    selectedCellsStore.setMouseStartCell(props.path)
+    documentStore.addCellOnClick(props.path)
+    documentStore.setMouseStartCell(props.path)
   }
 }
 
@@ -136,9 +136,9 @@ const handleClick = (event: CustomEvent) => {
     event.preventDefault()
     event.stopPropagation()
     if (!isCellSelected.value) {
-      selectedCellsStore.addCellOnClick(props.path)
+      documentStore.addCellOnClick(props.path)
     } else if (!isEditing.value) {
-      selectedCellsStore.setEditingCell(props.path)
+      documentStore.setEditingCell(props.path)
       cellInput.value?.focus()
     }
   }
@@ -146,11 +146,11 @@ const handleClick = (event: CustomEvent) => {
 const handleCellFocusByKey = (event: { path: string; startEdit?: boolean }) => {
   if (event.path === props.path) {
     if (!isCellSelected.value) {
-      selectedCellsStore.addCellOnClick(props.path)
+      documentStore.addCellOnClick(props.path)
     }
     if (event.startEdit && !isEditing.value) {
       nextTick(() => {
-        selectedCellsStore.setEditingCell(props.path)
+        documentStore.setEditingCell(props.path)
         if(cellInput.value) selectionOnTail(cellInput.value)
       })
     }
@@ -167,9 +167,9 @@ const handlePressDelete = (event: { path: string }) => {
 const handlePressInsert = (event: { path: string, gridPath?: string[] }) => {
   if (event.path === props.path) {
     if (!model.value.innerGrid) {
-      model.value.innerGrid = event.gridPath ? pickGridData(selectedCellsStore.gridData, event.gridPath) : createGridData(1, 1)
+      model.value.innerGrid = event.gridPath ? pickGridData(documentStore.gridData, event.gridPath) : createGridData(1, 1)
     }
-    selectedCellsStore.addCellOnClick(props.path + '>[0,0]')
+    documentStore.addCellOnClick(props.path + '>[0,0]')
   }
 }
 
@@ -192,10 +192,10 @@ const handleMouse = (event: Event, type: string) => {
     case 'mousedown':
       event.stopPropagation()
       event.preventDefault()
-      selectedCellsStore.setMouseStartCell(props.path)
+      documentStore.setMouseStartCell(props.path)
       break
     case 'mouseenter':
-      selectedCellsStore.setMouseEndCell(props.path)
+      documentStore.setMouseEndCell(props.path)
       break
   }
 }
@@ -213,7 +213,7 @@ const handleMouse = (event: Event, type: string) => {
       'non-right-bd': nonRightBorder,
     }"
     :style="{
-      'background-color': model.backgroundColor,
+      'background-color': searchStore.isSearchVisible && searchStore.highlight(model.text || '') ? 'white' : model.backgroundColor,
       'flex-direction': model.flexDirection,
     }"
     @mousedown="(e) => handleMouse(e, 'mousedown')"

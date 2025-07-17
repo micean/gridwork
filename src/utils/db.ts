@@ -3,8 +3,10 @@
  * 提供对 IndexedDB 数据库的封装操作
  */
 
+const DB_NAME = 'GridWorkDB'
+export const DOCUMENTS_STORE = 'documents'
+
 export interface DatabaseConfig {
-  name: string
   version: number
   stores: StoreConfig[]
 }
@@ -43,7 +45,7 @@ export class IndexedDBManager {
    */
   async init(): Promise<void> {
     return new Promise((resolve, reject) => {
-      const request = indexedDB.open(this.config.name, this.config.version)
+      const request = indexedDB.open(DB_NAME, this.config.version)
 
       request.onerror = () => {
         reject(new Error(`Failed to open database: ${request.error}`))
@@ -56,11 +58,11 @@ export class IndexedDBManager {
 
       request.onupgradeneeded = (event) => {
         const db = (event.target as IDBOpenDBRequest).result
-        
+
         // 创建或更新对象存储
         this.config.stores.forEach(storeConfig => {
           let store: IDBObjectStore
-          
+
           if (!db.objectStoreNames.contains(storeConfig.name)) {
             store = db.createObjectStore(storeConfig.name, {
               keyPath: storeConfig.keyPath,
@@ -147,7 +149,7 @@ export class IndexedDBManager {
   async query<T>(storeName: string, options: QueryOptions = {}): Promise<T[]> {
     return this.executeTransaction(storeName, 'readonly', (store) => {
       let source: IDBObjectStore | IDBIndex = store
-      
+
       if (options.index) {
         source = store.index(options.index)
       }
@@ -250,29 +252,17 @@ export class IndexedDBManager {
 
 // 默认配置示例
 export const defaultConfig: DatabaseConfig = {
-  name: 'GridWorkDB',
   version: 1,
   stores: [
     {
-      name: 'projects',
+      name: DOCUMENTS_STORE,
       keyPath: 'id',
-      autoIncrement: true,
+      autoIncrement: false,
       indexes: [
-        { name: 'name', keyPath: 'name', unique: true },
+        { name: 'name', keyPath: 'name' },
         { name: 'createdAt', keyPath: 'createdAt' }
       ]
     },
-    {
-      name: 'cells',
-      keyPath: 'id',
-      autoIncrement: true,
-      indexes: [
-        { name: 'projectId', keyPath: 'projectId' },
-        { name: 'row', keyPath: 'row' },
-        { name: 'col', keyPath: 'col' },
-        { name: 'updatedAt', keyPath: 'updatedAt' }
-      ]
-    }
   ]
 }
 
