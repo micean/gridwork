@@ -1,45 +1,19 @@
-# vue3-vite-ts
+# GridWork
 
-This template should help get you started developing with Vue 3 in Vite.
+一个轻量级的网格思维导图工具，专为快速构思和头脑风暴而设计。
 
-## Recommended IDE Setup
+## 项目介绍
 
-[VSCode](https://code.visualstudio.com/) + [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) (and disable Vetur).
+本项目是一个基于Vue3 + TypeScript开发的网格化思维导图应用，主要目的是提供一个能够快速打开、用于构思的草稿工具。大部分代码来自Kimi K2的vibe coding，体现了现代AI辅助编程的最佳实践。
 
-## Type Support for `.vue` Imports in TS
+创意灵感来源于优秀的TreeSheets软件，我们希望通过网格化的方式来组织思维，让创意的流动更加自然和高效。
 
-TypeScript cannot handle type information for `.vue` imports by default, so we replace the `tsc` CLI with `vue-tsc` for type checking. In editors, we need [Volar](https://marketplace.visualstudio.com/items?itemName=Vue.volar) to make the TypeScript language service aware of `.vue` types.
+## License
+Apache License Version 2.0
 
-## Customize configuration
+## 致谢
 
-See [Vite Configuration Reference](https://vite.dev/config/).
+- **创意灵感**: 感谢 [TreeSheets](https://strlen.com/treesheets) 提供的优秀创意和交互设计理念
+- **图标资源**: 感谢 [Remix Icon](https://remixicon.com/) 提供的精美开源图标
 
-## Project Setup
-
-```sh
-npm install
-```
-
-### Compile and Hot-Reload for Development
-
-```sh
-npm run dev
-```
-
-### Type-Check, Compile and Minify for Production
-
-```sh
-npm run build
-```
-
-### Run Unit Tests with [Vitest](https://vitest.dev/)
-
-```sh
-npm run test:unit
-```
-
-### Lint with [ESLint](https://eslint.org/)
-
-```sh
-npm run lint
-```
+edit by kimi
