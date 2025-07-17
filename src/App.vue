@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import TableComponent from './components/TableComponent.vue'
 import HeaderToolbar from './components/HeaderToolbar.vue'
+import Sidebar from './components/Sidebar.vue'
 import { createGridData } from '@/utils/data.ts'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useDocumentStore } from '@/stores/document.ts'
@@ -16,13 +17,18 @@ const vars = ref({
   dbError: null as string | null,
   documentName: '📄untitled',
   isEditingDocumentName: false,
+  isSidebarOpen: false,
 })
 const documentStore = useDocumentStore()
 const historyStore = useHistoryStore()
 const toolBar = ref<InstanceType<typeof HeaderToolbar> | null>(null)
+const sidebarRef = ref<InstanceType<typeof Sidebar> | null>(null)
 
 // 创建数据库管理器实例
 const dbManager = createDBManager()
+
+// 响应式文档ID
+const currentDocumentId = ref(localStorage.getItem('lastDocumentId') || '')
 
 documentStore.setupGrid(gridData)
 historyStore.initialize(JSON.stringify(gridData))
@@ -34,13 +40,13 @@ const initDatabase = async () => {
     vars.value.dbError = null
 
     await dbManager.init()
-    console.log('数据库初始化成功')
+    console.log('database initialized')
 
     // 尝试加载最近的文档
     await loadRecentDocument()
   } catch (error) {
-    console.error('数据库初始化失败:', error)
-    vars.value.dbError = '数据库初始化失败，请刷新页面重试'
+    console.error('database initialization failed:', error)
+    vars.value.dbError = 'database initialization failed，please try again'
   } finally {
     vars.value.isLoading = false
   }
@@ -56,37 +62,49 @@ const loadRecentDocument = async () => {
       documentStore.loadDoc(document)
       historyStore.initialize(JSON.stringify(document.gridData))
       vars.value.documentName = document.name
-      console.log('加载最近文档成功')
+      currentDocumentId.value = lastDocumentId
     }
   } catch (error) {
-    console.error('加载最近项目失败:', error)
+    console.error('loading recent document failed:', error)
   }
 }
 
-// const loadDocument = async (documentId: string) => {
-//   try {
-//     const document = await dbManager.get<DocumentData>('projects', documentId)
-//     if (document && document.gridData) {
-//       documentStore.setupGrid(document.gridData)
-//       historyStore.initialize(JSON.stringify(document.gridData))
-//       localStorage.setItem('lastDocumentId', documentId.toString())
-//       console.log('加载文档成功:', document.name)
-//     }
-//   } catch (error) {
-//     console.error('加载文档失败:', error)
-//     throw error
-//   }
-// }
-//
-// const getAllDocuments = async () => {
-//   try {
-//     const documents = await dbManager.getAll<DocumentData>('projects')
-//     return documents.sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
-//   } catch (error) {
-//     console.error('获取项目列表失败:', error)
-//     throw error
-//   }
-// }
+const handleSelectDocument = async (document: DocumentData) => {
+  try {
+    vars.value.isLoading = true
+    documentStore.loadDoc(document)
+    historyStore.initialize(JSON.stringify(document.gridData))
+    vars.value.documentName = document.name
+    localStorage.setItem('lastDocumentId', document.id)
+    currentDocumentId.value = document.id
+  } catch (error) {
+    console.error('load document failed:', error)
+    throw error
+  } finally {
+    vars.value.isLoading = false
+  }
+}
+
+const handleCreateDocument = async (document: DocumentData) => {
+  try {
+    vars.value.isLoading = true
+
+    // 加载新文档
+    documentStore.loadDoc(document)
+    historyStore.initialize(JSON.stringify(document.gridData))
+    vars.value.documentName = document.name
+    localStorage.setItem('lastDocumentId', document.id)
+    currentDocumentId.value = document.id
+  } catch (error) {
+    console.error('create document failed:', error)
+  } finally {
+    vars.value.isLoading = false
+  }
+}
+
+const toggleSidebar = () => {
+  vars.value.isSidebarOpen = !vars.value.isSidebarOpen
+}
 
 // 添加和移除事件监听
 const handleClickOutside = (event: Event) => {
@@ -160,38 +178,59 @@ onUnmounted(() => {
 
 <template>
   <div class="app-container">
-    <header class="app-header">
-      <div class="header-left">
-        <div class="document-name-container">
-          <span
-            v-if="!vars.isEditingDocumentName"
-            class="document-name"
-            @dblclick="startEditingDocumentName"
-            title="双击编辑标题"
-          >
-            {{ vars.documentName }}
-          </span>
-          <input
-            v-else
-            v-model="vars.documentName"
-            class="document-name-input"
-            @focus="() => documentStore.clearSelection()"
-            @blur="saveDocumentName"
-            @keyup.enter="saveDocumentName"
-            @keyup.esc="cancelEditingDocumentName"
-            placeholder="输入标题"
-          />
+    <!-- 侧边栏 -->
+    <Sidebar
+      :is-open="vars.isSidebarOpen"
+      :current-document-id="currentDocumentId"
+      @selected="handleSelectDocument"
+      @created="handleCreateDocument"
+      @close="toggleSidebar"
+      ref="sidebarRef"
+    />
+
+    <!-- 主内容区 -->
+    <div class="main-content" :class="{ 'sidebar-open': vars.isSidebarOpen }">
+      <header class="app-header">
+        <div class="header-left">
+          <button class="sidebar-toggle" @click="toggleSidebar" title="切换侧边栏">
+            <span>☰</span>
+          </button>
+          <div class="document-name-container">
+            <span
+              v-if="!vars.isEditingDocumentName"
+              class="document-name"
+              @dblclick="startEditingDocumentName"
+              :title="vars.documentName"
+            >
+              {{ vars.documentName }}
+            </span>
+            <input
+              v-else
+              v-model="vars.documentName"
+              class="document-name-input"
+              @focus="() => documentStore.clearSelection()"
+              @blur="saveDocumentName"
+              @keyup.enter="saveDocumentName"
+              @keyup.esc="cancelEditingDocumentName"
+              placeholder="输入标题"
+            />
+          </div>
         </div>
-      </div>
-      <div class="header-right">
-        <HeaderToolbar ref="toolBar"/>
-      </div>
-    </header>
-    <main class="editor-area" @click="handleClickOutside">
-      <div class="editor-content">
-        <TableComponent v-model="documentStore.gridData" />
-      </div>
-    </main>
+        <div class="header-right">
+          <HeaderToolbar ref="toolBar"/>
+        </div>
+      </header>
+
+      <main class="editor-area" @click="handleClickOutside">
+        <div class="editor-content">
+          <div v-if="vars.isLoading" class="loading-overlay">
+            <div class="loading-spinner"></div>
+            <p>加载中...</p>
+          </div>
+          <TableComponent v-model="documentStore.gridData" />
+        </div>
+      </main>
+    </div>
   </div>
 </template>
 

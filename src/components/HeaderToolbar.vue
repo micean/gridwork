@@ -309,12 +309,12 @@ import Slider from './Slider.vue'
 import ColorPicker from './ColorPicker.vue'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useDocumentStore } from '@/stores/document.ts'
-import type { CellData, DocumentData } from '../../env'
+import type { CellData } from '../../env'
 import { createCellData, createRowData, lookupCellData, lookupInnerGrid, nanoid } from '@/utils/data.ts'
 import emitter from '@/utils/bus.ts'
 import { useSearchStore } from '@/stores/search.ts'
 import { useHistoryStore } from '@/stores/history.ts'
-import { DOCUMENTS_STORE, getDBManager } from '@/utils/db.ts'
+import { getDBManager } from '@/utils/db.ts'
 
 defineExpose({
   closePopup: (dialog: 'fontSize' | 'color' | 'search') => {
