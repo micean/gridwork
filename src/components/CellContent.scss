@@ -50,11 +50,12 @@
     font-size: 0.8rem;
     transition: background-color 0.2s ease;
     align-self: stretch;
+    max-width: 1000px;
     min-width: 15px;
     min-height: 15px;
-    white-space: pre;
-    //word-wrap: break-word;
-    //word-break: break-word;
+    white-space: pre-wrap;
+    word-wrap: break-word;
+    word-break: break-word;
     text-align: left;
     position: relative;
     outline: none;
