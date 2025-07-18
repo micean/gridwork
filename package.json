@@ -9,7 +9,7 @@
     "preview": "vite preview",
     "test:unit": "vitest",
     "build-only": "vite build",
-    "build:github": "cross-env VITE_BASE_PATH=/gridwork/ vite build",
+    "build:github": "set \"OUT_DIR=docs\" && cross-env VITE_BASE_PATH=/gridwork/ vite build",
     "type-check": "vue-tsc --build",
     "lint": "eslint . --fix",
     "format": "prettier --write src/"
