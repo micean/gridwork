@@ -1,5 +1,6 @@
 .adaptive-table {
-  width: 100%;
+  width: max-content;
+  height: max-content;
   border-collapse: collapse;
   border: 2px solid #999;
   background-color: white;
@@ -8,7 +9,7 @@
     border: 1px solid #ddd;
     padding: 0;
     position: relative;
-    max-width: 600px;
+    width: auto;
     height: 0px;
     vertical-align: top;
 

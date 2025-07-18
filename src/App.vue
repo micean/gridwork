@@ -111,7 +111,7 @@ const handleClickOutside = (event: Event) => {
   const target = event.target as HTMLElement
 
   // 检查点击是否在.editor-content内
-  const isInsideEditorContent = target.closest('.editor-content')
+  const isInsideEditorContent = target.closest('.adaptive-table')
 
   // 如果点击在.editor-content外，清除选定和编辑状态
   if (!isInsideEditorContent) {
@@ -222,13 +222,7 @@ onUnmounted(() => {
       </header>
 
       <main class="editor-area" @click="handleClickOutside">
-        <div class="editor-content">
-          <div v-if="vars.isLoading" class="loading-overlay">
-            <div class="loading-spinner"></div>
-            <p>加载中...</p>
-          </div>
-          <TableComponent v-model="documentStore.gridData" />
-        </div>
+        <TableComponent v-model="documentStore.gridData" />
       </main>
     </div>
   </div>
