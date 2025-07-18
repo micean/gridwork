@@ -170,7 +170,7 @@
         ></path>
       </svg>
     </i>
-    <i title="删除线" @click="toggleFontUnderline" :class="{ disabled: !hasSelection }">
+    <i title="下划线" @click="toggleFontUnderline" :class="{ disabled: !hasSelection }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -227,10 +227,6 @@
         <div class="popup-content">
           <div class="popup-body">
             <div class="search-input-wrapper">
-              <svg class="search-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor">
-                <circle cx="11" cy="11" r="8"></circle>
-                <path d="m21 21-4.35-4.35"></path>
-              </svg>
               <input
                 v-model="vars.searchQuery"
                 type="text"
@@ -239,7 +235,6 @@
                 @input="searchStore.setSearchQuery(($event.target as HTMLInputElement).value || '')"
                 @focus="() => documentStore.clearSelection()"
                 @keyup.esc="toggleSearchPopup"
-                @keyup.enter="toggleSearchPopup"
               />
               <button v-if="vars.searchQuery" class="clear-button" @click="clearSearch">
                 <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
@@ -248,22 +243,40 @@
                 </svg>
               </button>
             </div>
+            <div class="replace-input-wrapper">
+              <input
+                v-model="vars.replaceQuery"
+                type="text"
+                class="search-input"
+                placeholder="替换为..."
+                @keyup.esc="toggleSearchPopup"
+              />
+              <button v-if="vars.replaceQuery" class="clear-button" @click="clearReplace">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor">
+                  <line x1="18" y1="6" x2="6" y2="18"></line>
+                  <line x1="6" y1="6" x2="18" y2="18"></line>
+                </svg>
+              </button>
+            </div>
+            <div class="replace-buttons">
+              <button
+                class="replace-button"
+                @click="replaceCurrent"
+                :disabled="!vars.searchQuery || findMatchingCells(vars.searchQuery).length === 0"
+              >
+                替换
+              </button>
+              <button
+                class="replace-button"
+                @click="replaceAll"
+                :disabled="!vars.searchQuery || findMatchingCells(vars.searchQuery).length === 0"
+              >
+                全部替换
+              </button>
+            </div>
           </div>
         </div>
       </div>
-    </i>
-    <i title="替换">
-      <svg
-        xmlns="http://www.w3.org/2000/svg"
-        viewBox="0 0 24 24"
-        width="18"
-        height="18"
-        fill="currentColor"
-      >
-        <path
-          d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.032 20 2 15.968 2 11C2 6.032 6.032 2 11 2C15.968 2 20 6.032 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.6589 9C15.8357 6.66906 13.6136 5 11 5C7.685 5 5 7.685 5 11H7C7 8.792 8.792 7 11 7C11.6912 7 12.3417 7.17563 12.9092 7.48467L12 9H16.6589ZM17 11H15C15 13.208 13.208 15 11 15C10.3088 15 9.65828 14.8244 9.0908 14.5153L10 13H7.53567H5.34109C6.16433 15.3309 8.38635 17 11 17C14.315 17 17 14.315 17 11Z"
-        ></path>
-      </svg>
     </i>
     <i title="保存" @click="handleSave">
       <svg
@@ -354,6 +367,7 @@ const vars = ref({
   showColorPopup: false,
   showSearchPopup: false,
   searchQuery: '',
+  replaceQuery: '',
 })
 const documentStore = useDocumentStore()
 const historyStore = useHistoryStore()
@@ -558,7 +572,14 @@ const toggleSearchPopup = () => {
 
 const clearSearch = () => {
   vars.value.searchQuery = ''
+  vars.value.replaceQuery = ''
   searchStore.clearSearchQuery()
+  const searchInput = document.querySelector('.search-popup input') as HTMLInputElement
+  searchInput?.focus()
+}
+
+const clearReplace = () => {
+  vars.value.replaceQuery = ''
   const searchInput = document.querySelector('.search-popup input') as HTMLInputElement
   searchInput?.focus()
 }
@@ -624,6 +645,72 @@ const toggleFontUnderline = () => {
     .forEach((cell) => {
       cell.fontUnderline = !cell.fontUnderline
     })
+}
+
+const replaceCurrent = () => {
+  if (!vars.value.searchQuery) return
+
+  // 获取所有匹配的单元格
+  const matchingCells = findMatchingCells(vars.value.searchQuery)
+  if (matchingCells.length === 0) return
+
+  // 替换第一个匹配的单元格
+  const cell = lookupCellData(documentStore.gridData, matchingCells[0])
+  if (cell && cell.text) {
+    cell.text = cell.text.replace(
+      new RegExp(escapeRegExp(vars.value.searchQuery), 'gi'),
+      vars.value.replaceQuery || '',
+    )
+  }
+}
+
+const replaceAll = () => {
+  if (!vars.value.searchQuery) return
+
+  // 获取所有匹配的单元格
+  const matchingCells = findMatchingCells(vars.value.searchQuery)
+  if (matchingCells.length === 0) return
+
+  // 替换所有匹配的单元格
+  matchingCells.forEach((path) => {
+    const cell = lookupCellData(documentStore.gridData, path)
+    if (cell && cell.text) {
+      cell.text = cell.text.replace(
+        new RegExp(escapeRegExp(vars.value.searchQuery), 'gi'),
+        vars.value.replaceQuery || '',
+      )
+    }
+  })
+}
+
+const findMatchingCells = (searchTerm: string): string[] => {
+  if (!searchTerm) return []
+
+  const matchingCells: string[] = []
+  const searchLower = searchTerm.toLowerCase()
+
+  function searchGrid(grid: CellData[][], prefix: string = '') {
+    grid.forEach((row, rowIndex) => {
+      row.forEach((cell, colIndex) => {
+        const path = prefix ? `${prefix}>[${rowIndex},${colIndex}]` : `[${rowIndex},${colIndex}]`
+
+        if (cell.text && cell.text.toLowerCase().includes(searchLower)) {
+          matchingCells.push(path)
+        }
+
+        if (cell.innerGrid) {
+          searchGrid(cell.innerGrid, path)
+        }
+      })
+    })
+  }
+
+  searchGrid(documentStore.gridData)
+  return matchingCells
+}
+
+const escapeRegExp = (string: string): string => {
+  return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 </script>
 
@@ -703,6 +790,12 @@ const toggleFontUnderline = () => {
   align-items: center;
 }
 
+.replace-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+
 .search-icon {
   position: absolute;
   left: 8px;
@@ -714,7 +807,7 @@ const toggleFontUnderline = () => {
 
 .search-input {
   width: 100%;
-  padding: 8px 8px 8px 32px;
+  padding: 8px;
   border: 1px solid #d9d9d9;
   border-radius: 4px;
   font-size: 14px;
@@ -723,6 +816,48 @@ const toggleFontUnderline = () => {
   &:focus {
     border-color: #40a9ff;
     box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
+  }
+}
+
+.replace-buttons {
+  display: flex;
+  gap: 8px;
+  justify-content: flex-end;
+  margin-top: 8px;
+}
+
+.replace-button {
+  padding: 6px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover:not(:disabled) {
+    border-color: #40a9ff;
+    color: #40a9ff;
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+
+  &:first-child {
+    background: #f0f0f0;
+  }
+
+  &:last-child {
+    background: #1890ff;
+    color: white;
+    border-color: #1890ff;
+
+    &:hover:not(:disabled) {
+      background: #40a9ff;
+      border-color: #40a9ff;
+    }
   }
 }
 
