@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import {computed, ref, useTemplateRef, onMounted, onUnmounted, watch, nextTick} from 'vue'
+import { computed, ref, useTemplateRef, onMounted, onUnmounted, watch, nextTick } from 'vue'
 import type { CellData } from '../../env'
 import TableComponent from '@/components/TableComponent.vue'
 import { useDocumentStore } from '@/stores/document.ts'
-import {isCursorAtHead, isCursorAtTail, selectionOnTail} from '@/utils/edit.ts'
+import { isCursorAtHead, isCursorAtTail, selectionOnTail } from '@/utils/edit.ts'
 import { createGridData, pickGridData } from '@/utils/data.ts'
 import emitter from '@/utils/bus.ts'
-import {useSearchStore} from "@/stores/search.ts";
+import { useSearchStore } from '@/stores/search.ts'
 
 interface Props {
   path: string
@@ -32,35 +32,38 @@ const isEditing = computed(() => {
   return documentStore.isEditingCell(props.path)
 })
 
-watch(() => model.value.text, (newText) => {
-  if(!isEditing.value && newText !== vars.value.content) {
-    vars.value.content = newText
-    console.log(model.value.text, vars.value.content)
-  }
-})
+watch(
+  () => model.value.text,
+  (newText) => {
+    if (!isEditing.value && newText !== vars.value.content) {
+      vars.value.content = newText
+      console.log(model.value.text, vars.value.content)
+    }
+  },
+)
 
+const sizeNumber = computed(() => {
+  const fontSize = model.value.fontSize || 0.8;
+  return 2 + (fontSize - 0.4) * 37.5
+})
 const nonTopBorder = computed(() => {
   return (
-    documentStore.isCellSelected(props.path) &&
-    !documentStore.selectedBorder(props.path, 'top')
+    documentStore.isCellSelected(props.path) && !documentStore.selectedBorder(props.path, 'top')
   )
 })
 const nonBottomBorder = computed(() => {
   return (
-    documentStore.isCellSelected(props.path) &&
-    !documentStore.selectedBorder(props.path, 'bottom')
+    documentStore.isCellSelected(props.path) && !documentStore.selectedBorder(props.path, 'bottom')
   )
 })
 const nonLeftBorder = computed(() => {
   return (
-    documentStore.isCellSelected(props.path) &&
-    !documentStore.selectedBorder(props.path, 'left')
+    documentStore.isCellSelected(props.path) && !documentStore.selectedBorder(props.path, 'left')
   )
 })
 const nonRightBorder = computed(() => {
   return (
-    documentStore.isCellSelected(props.path) &&
-    !documentStore.selectedBorder(props.path, 'right')
+    documentStore.isCellSelected(props.path) && !documentStore.selectedBorder(props.path, 'right')
   )
 })
 
@@ -92,28 +95,28 @@ const handleInputArrow = (event: Event, direction: 'up' | 'down' | 'left' | 'rig
   const target = event.target as HTMLElement
   switch (direction) {
     case 'up':
-      if(isCursorAtHead(target)){
+      if (isCursorAtHead(target)) {
         event.preventDefault()
         event.stopPropagation()
         documentStore.focusAnotherCell('up', true)
       }
       break
     case 'down':
-      if(isCursorAtTail(target)){
+      if (isCursorAtTail(target)) {
         event.preventDefault()
         event.stopPropagation()
         documentStore.focusAnotherCell('down', true)
       }
       break
     case 'left':
-      if(isCursorAtHead(target)){
+      if (isCursorAtHead(target)) {
         event.preventDefault()
         event.stopPropagation()
         documentStore.focusAnotherCell('left', true)
       }
       break
     case 'right':
-      if(isCursorAtTail(target)){
+      if (isCursorAtTail(target)) {
         event.preventDefault()
         event.stopPropagation()
         documentStore.focusAnotherCell('right', true)
@@ -151,7 +154,7 @@ const handleCellFocusByKey = (event: { path: string; startEdit?: boolean }) => {
     if (event.startEdit && !isEditing.value) {
       nextTick(() => {
         documentStore.setEditingCell(props.path)
-        if(cellInput.value) selectionOnTail(cellInput.value)
+        if (cellInput.value) selectionOnTail(cellInput.value)
       })
     }
   }
@@ -164,10 +167,12 @@ const handlePressDelete = (event: { path: string }) => {
     cellInput.value!.textContent = ''
   }
 }
-const handlePressInsert = (event: { path: string, gridPath?: string[] }) => {
+const handlePressInsert = (event: { path: string; gridPath?: string[] }) => {
   if (event.path === props.path) {
     if (!model.value.innerGrid) {
-      model.value.innerGrid = event.gridPath ? pickGridData(documentStore.gridData, event.gridPath) : createGridData(1, 1)
+      model.value.innerGrid = event.gridPath
+        ? pickGridData(documentStore.gridData, event.gridPath)
+        : createGridData(1, 1)
     }
     documentStore.addCellOnClick(props.path + '>[0,0]')
   }
@@ -213,7 +218,10 @@ const handleMouse = (event: Event, type: string) => {
       'non-right-bd': nonRightBorder,
     }"
     :style="{
-      'background-color': searchStore.isSearchVisible && searchStore.highlight(model.text || '') ? 'white' : model.backgroundColor,
+      'background-color':
+        searchStore.isSearchVisible && searchStore.highlight(model.text || '') || isEditing
+          ? 'white'
+          : model.backgroundColor,
       'flex-direction': model.flexDirection,
       'align-items': model.flexDirection === 'row' ? 'center' : undefined,
     }"
@@ -222,28 +230,42 @@ const handleMouse = (event: Event, type: string) => {
   >
     <code
       ref="cellInput"
+      v-show="sizeNumber > 2"
       :class="['cell-input', { editing: isEditing }]"
       :contenteditable="isCellSelected"
       :style="{
-        'font-size': model.fontSize ? model.fontSize + 'px' : '13px',
-        'color': searchStore.isSearchVisible && searchStore.highlight(model.text || '') ? 'red' : undefined,
-        'max-width': model.flexDirection === 'row' && model.innerGrid ? '400px' : undefined,
-        'display': model.flexDirection === 'row' && model.innerGrid ? 'flex' : undefined,
+        'font-size': model.fontSize ? model.fontSize + 'rem' : '0.8rem',
+        'min-width': sizeNumber + 'px',
+        'min-height': sizeNumber + 'px',
+        color:
+          searchStore.isSearchVisible && searchStore.highlight(model.text || '')
+            ? 'red'
+            : undefined,
+        'max-width': model.flexDirection === 'row' && model.innerGrid ? '600px' : undefined,
+        display: model.flexDirection === 'row' && model.innerGrid ? 'flex' : undefined,
         'align-items': model.flexDirection === 'row' && model.innerGrid ? 'center' : undefined,
       }"
       @input="handleInput"
       @blur="handleBlur"
       @keydown.esc="handleEsc"
-      @keydown.up="e => handleInputArrow(e, 'up')"
-      @keydown.down="e => handleInputArrow(e, 'down')"
-      @keydown.left="e => handleInputArrow(e, 'left')"
-      @keydown.right="e => handleInputArrow(e, 'right')"
+      @keydown.up="(e) => handleInputArrow(e, 'up')"
+      @keydown.down="(e) => handleInputArrow(e, 'down')"
+      @keydown.left="(e) => handleInputArrow(e, 'left')"
+      @keydown.right="(e) => handleInputArrow(e, 'right')"
       @mousedown="detectMouseEdit"
       >{{ vars.content }}</code
     >
-    <div v-if="searchStore.isSearchVisible && searchStore.searchQuery.length && !searchStore.highlight(model.text || '')" class="masked"></div>
+    <div
+      v-if="
+        searchStore.isSearchVisible &&
+        searchStore.searchQuery.length &&
+        !searchStore.highlight(model.text || '')
+      "
+      class="masked"
+    ></div>
     <TableComponent
       v-if="model.innerGrid && model.innerGrid.length > 0"
+      v-show="sizeNumber > 2"
       v-model="model.innerGrid"
       :parentPath="path"
     />

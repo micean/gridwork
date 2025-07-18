@@ -11,15 +11,15 @@
         @mouseenter="handleMouseEnter"
         @mouseleave="handleMouseLeave"
       >
-        <div class="slider-tooltip" v-if="showTooltip && (isDragging || isHovering)">
-          {{ formatValue(displayValue) }}
-        </div>
+<!--        <div class="slider-tooltip" v-if="showTooltip && (isDragging || isHovering)">-->
+<!--          {{ formatValue(displayValue) }}-->
+<!--        </div>-->
       </div>
     </div>
     <div class="slider-labels" v-if="showLabels">
-      <span class="slider-min">{{ formatValue(min) }}</span>
+      <span class="slider-min">min</span>
       <span class="slider-value"> </span>
-      <span class="slider-max">{{ formatValue(max) }}</span>
+      <span class="slider-max">max</span>
     </div>
   </div>
 </template>

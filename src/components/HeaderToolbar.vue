@@ -1,10 +1,6 @@
 <template>
   <div class="toolbar">
-    <i
-      title="向上增加一行"
-      @click="addRowCol('top')"
-      :class="{ disabled: !canAddRowCol }"
-    >
+    <i title="向上增加一行" @click="addRowCol('top')" :class="{ disabled: !canAddRowCol }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -17,11 +13,7 @@
         ></path>
       </svg>
     </i>
-    <i
-      title="向下增加一行"
-      @click="addRowCol('bottom')"
-      :class="{ disabled: !canAddRowCol }"
-    >
+    <i title="向下增加一行" @click="addRowCol('bottom')" :class="{ disabled: !canAddRowCol }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -34,11 +26,7 @@
         ></path>
       </svg>
     </i>
-    <i
-      title="向左增加一列"
-      @click="addRowCol('left')"
-      :class="{ disabled: !canAddRowCol }"
-    >
+    <i title="向左增加一列" @click="addRowCol('left')" :class="{ disabled: !canAddRowCol }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -51,11 +39,7 @@
         ></path>
       </svg>
     </i>
-    <i
-      title="向右增加一列"
-      @click="addRowCol('right')"
-      :class="{ disabled: !canAddRowCol }"
-    >
+    <i title="向右增加一列" @click="addRowCol('right')" :class="{ disabled: !canAddRowCol }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -68,11 +52,7 @@
         ></path>
       </svg>
     </i>
-    <i
-      title="删除行"
-      @click="removeRowCol('row')"
-      :class="{ disabled: !hasSelection }"
-    >
+    <i title="删除行" @click="removeRowCol('row')" :class="{ disabled: !hasSelection }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -85,11 +65,7 @@
         ></path>
       </svg>
     </i>
-    <i
-      title="删除列"
-      @click="removeRowCol('col')"
-      :class="{ disabled: !hasSelection }"
-    >
+    <i title="删除列" @click="removeRowCol('col')" :class="{ disabled: !hasSelection }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -102,11 +78,7 @@
         ></path>
       </svg>
     </i>
-    <i
-      title="插入子级"
-      @click="insertChild"
-      :class="{ disabled: !hasSelection }"
-    >
+    <i title="插入子级" @click="insertChild" :class="{ disabled: !hasSelection }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -119,11 +91,7 @@
         ></path>
       </svg>
     </i>
-    <i
-      title="调整内部布局"
-      @click="toggleLayout"
-      :class="{ disabled: !hasSelection }"
-    >
+    <i title="调整内部布局" @click="toggleLayout" :class="{ disabled: !hasSelection }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -164,12 +132,12 @@
           <div class="popup-body">
             <Slider
               :model-value="vars.fontSize"
-              :min="13"
-              :max="22"
-              :step="1"
+              :min="0.5"
+              :max="1.5"
+              :step="0.1"
               :show-labels="true"
               :show-tooltip="true"
-              :format="(value) => `${value}px`"
+              :format="(value) => `${value}rem`"
               @change="handleFontSizeChange"
             />
           </div>
@@ -244,19 +212,20 @@
         </div>
       </div>
     </i>
-    <i
-      title="保存"
-      @click="handleSave"
-    >
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor">
-        <path d="M18 19H19V6.82843L17.1716 5H16V9H7V5H5V19H6V12H18V19ZM4 3H18L20.7071 5.70711C20.8946 5.89464 21 6.149 21 6.41421V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3ZM8 14V19H16V14H8Z"></path>
+    <i title="保存" @click="handleSave">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M18 19H19V6.82843L17.1716 5H16V9H7V5H5V19H6V12H18V19ZM4 3H18L20.7071 5.70711C20.8946 5.89464 21 6.149 21 6.41421V20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3ZM8 14V19H16V14H8Z"
+        ></path>
       </svg>
     </i>
-    <i
-      title="求和"
-      @click="handleSummation"
-      :class="{ disabled: !summable }"
-    >
+    <i title="求和" @click="handleSummation" :class="{ disabled: !summable }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -267,11 +236,7 @@
         <path d="M5 18L12.6796 12L5 6V4H19V6H8.26348L16 12L8.26348 18H19V20H5V18Z"></path>
       </svg>
     </i>
-    <i
-      title="撤消"
-      @click="handleUndo"
-      :class="{ disabled: !historyStore.canUndo }"
-    >
+    <i title="撤消" @click="handleUndo" :class="{ disabled: !historyStore.canUndo }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -284,11 +249,7 @@
         ></path>
       </svg>
     </i>
-    <i
-      title="重做"
-      @click="handleRedo"
-      :class="{ disabled: !historyStore.canRedo }"
-    >
+    <i title="重做" @click="handleRedo" :class="{ disabled: !historyStore.canRedo }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -310,7 +271,13 @@ import ColorPicker from './ColorPicker.vue'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useDocumentStore } from '@/stores/document.ts'
 import type { CellData } from '../../env'
-import { createCellData, createRowData, lookupCellData, lookupInnerGrid, nanoid } from '@/utils/data.ts'
+import {
+  createCellData,
+  createRowData,
+  lookupCellData,
+  lookupInnerGrid,
+  updateCellFontSizeRecursive,
+} from '@/utils/data.ts'
 import emitter from '@/utils/bus.ts'
 import { useSearchStore } from '@/stores/search.ts'
 import { useHistoryStore } from '@/stores/history.ts'
@@ -325,21 +292,21 @@ defineExpose({
     } else if (dialog === 'search') {
       vars.value.showSearchPopup = false
     }
-  }
+  },
 })
 
 const vars = ref({
-  fontSize: 13,
+  fontSize: 0.8,
   showFontSizePopup: false,
   showColorPopup: false,
   showSearchPopup: false,
   searchQuery: '',
-});
+})
 const documentStore = useDocumentStore()
 const historyStore = useHistoryStore()
 const searchStore = useSearchStore()
 
-const dbManager = getDBManager();
+const dbManager = getDBManager()
 
 const canAddRowCol = computed(() => {
   return documentStore.selectedCells.length === 1
@@ -351,7 +318,6 @@ const summable = computed(() => {
   const [rowSize, colSize] = documentStore.countSelectedRowColSize()
   return (rowSize === 1 && colSize > 2) || (rowSize > 2 && colSize === 1)
 })
-
 
 // 监听数据变化，记录历史（排除编辑中的数据）
 watch(
@@ -377,7 +343,6 @@ watch(
     searchStore.setSearchQuery(newText)
   },
 )
-
 
 const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
   if (documentStore.selectedCells.length !== 1) return
@@ -489,11 +454,8 @@ const toggleLayout = () => {
 
 const toggleFontSizePopup = () => {
   if (documentStore.selectedCells.length) {
-    const firstCell = lookupCellData(
-      documentStore.gridData,
-      documentStore.selectedCells[0],
-    )
-    vars.value.fontSize = firstCell?.fontSize || 13
+    const firstCell = lookupCellData(documentStore.gridData, documentStore.selectedCells[0])
+    vars.value.fontSize = firstCell?.fontSize || 0.8
     vars.value.showFontSizePopup = !vars.value.showFontSizePopup
   }
 }
@@ -503,7 +465,7 @@ const handleFontSizeChange = (fontSize: number) => {
   documentStore.selectedCells
     .map((it) => lookupCellData(documentStore.gridData, it)!)
     .forEach((cell) => {
-      cell.fontSize = fontSize
+      updateCellFontSizeRecursive(cell, fontSize)
     })
 }
 
@@ -519,7 +481,7 @@ const handleColorSelect = (color: string) => {
   documentStore.selectedCells
     .map((it) => lookupCellData(documentStore.gridData, it)!)
     .forEach((cell) => {
-      if(['white', '#fff', '#ffffff', '#FFF', '#FFFFFF', 'rgb(255, 255, 255)'].includes(color)) {
+      if (['white', '#fff', '#ffffff', '#FFF', '#FFFFFF', 'rgb(255, 255, 255)'].includes(color)) {
         cell.backgroundColor = undefined
         return
       }
@@ -555,9 +517,7 @@ const handleSave = async () => {
 const handleSummation = () => {
   if (!summable.value) return
 
-  const cells = documentStore.selectedCells.map(
-    (it) => lookupCellData(documentStore.gridData, it)!,
-  )
+  const cells = documentStore.selectedCells.map((it) => lookupCellData(documentStore.gridData, it)!)
   const lastCell = cells.pop()!
   const sum = cells
     .map((it) => it.text)

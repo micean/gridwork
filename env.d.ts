@@ -1,18 +1,18 @@
 /// <reference types="vite/client" />
 
-export interface CellData{
-  id: string;
-  text: string;
-  fontSize?: number;
-  backgroundColor?: string;
-  flexDirection?: 'row' | 'column';
+export interface CellData {
+  id: string
+  text: string
+  fontSize?: number
+  backgroundColor?: string
+  flexDirection?: 'row' | 'column'
   innerGrid?: CellData[][]
 }
 
 export interface DocumentData {
-  id: string;
-  name: string;
-  gridData: CellData[][];
-  createdAt: string;
-  updatedAt: string;
+  id: string
+  name: string
+  gridData: CellData[][]
+  createdAt: string
+  updatedAt: string
 }
