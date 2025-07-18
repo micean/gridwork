@@ -4,6 +4,9 @@ export interface CellData {
   id: string
   text: string
   fontSize?: number
+  fontItalic?: boolean
+  fontThrough?: boolean
+  fontUnderline?: boolean
   backgroundColor?: string
   flexDirection?: 'row' | 'column'
   innerGrid?: CellData[][]

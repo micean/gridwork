@@ -120,6 +120,10 @@ export const pickGridData = (
         cell.text = ''
         cell.innerGrid = undefined
         cell.fontSize = undefined
+        cell.flexDirection = undefined
+        cell.fontItalic = undefined
+        cell.fontThrough = undefined
+        cell.fontUnderline = undefined
         cell.backgroundColor = undefined
       }
       return { pos, data }

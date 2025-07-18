@@ -78,6 +78,7 @@
         ></path>
       </svg>
     </i>
+    <div class="divider"></div>
     <i title="插入子级" @click="insertChild" :class="{ disabled: !hasSelection }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -104,6 +105,7 @@
         ></path>
       </svg>
     </i>
+    <div class="divider"></div>
     <i
       title="字体大小"
       @click="toggleFontSizePopup"
@@ -144,6 +146,43 @@
         </div>
       </div>
     </i>
+    <i title="斜体" @click="toggleFontItalic" :class="{ disabled: !hasSelection }">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path d="M15 20H7V18H9.92661L12.0425 6H9V4H17V6H14.0734L11.9575 18H15V20Z"></path>
+      </svg>
+    </i>
+    <i title="删除线" @click="toggleFontThrough" :class="{ disabled: !hasSelection }">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M17.1538 14C17.3846 14.5161 17.5 15.0893 17.5 15.7196C17.5 17.0625 16.9762 18.1116 15.9286 18.867C14.8809 19.6223 13.4335 20 11.5862 20C9.94674 20 8.32335 19.6185 6.71592 18.8555V16.6009C8.23538 17.4783 9.7908 17.917 11.3822 17.917C13.9333 17.917 15.2128 17.1846 15.2208 15.7196C15.2208 15.0939 15.0049 14.5598 14.5731 14.1173C14.5339 14.0772 14.4939 14.0381 14.4531 14H3V12H21V14H17.1538ZM13.076 11H7.62908C7.4566 10.8433 7.29616 10.6692 7.14776 10.4778C6.71592 9.92084 6.5 9.24559 6.5 8.45207C6.5 7.21602 6.96583 6.165 7.89749 5.299C8.82916 4.43299 10.2706 4 12.2219 4C13.6934 4 15.1009 4.32808 16.4444 4.98426V7.13591C15.2448 6.44921 13.9293 6.10587 12.4978 6.10587C10.0187 6.10587 8.77917 6.88793 8.77917 8.45207C8.77917 8.87172 8.99709 9.23796 9.43293 9.55079C9.86878 9.86362 10.4066 10.1135 11.0463 10.3004C11.6665 10.4816 12.3431 10.7148 13.076 11H13.076Z"
+        ></path>
+      </svg>
+    </i>
+    <i title="删除线" @click="toggleFontUnderline" :class="{ disabled: !hasSelection }">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M8 3V12C8 14.2091 9.79086 16 12 16C14.2091 16 16 14.2091 16 12V3H18V12C18 15.3137 15.3137 18 12 18C8.68629 18 6 15.3137 6 12V3H8ZM4 20H20V22H4V20Z"
+        ></path>
+      </svg>
+    </i>
     <i
       title="颜色"
       @click="toggleColorPopup"
@@ -164,6 +203,7 @@
 
       <ColorPicker :model-value="vars.showColorPopup" @select-color="handleColorSelect" />
     </i>
+    <div class="divider"></div>
     <i
       title="搜索"
       @click="toggleSearchPopup"
@@ -211,6 +251,19 @@
           </div>
         </div>
       </div>
+    </i>
+    <i title="替换">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="18"
+        height="18"
+        fill="currentColor"
+      >
+        <path
+          d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.032 20 2 15.968 2 11C2 6.032 6.032 2 11 2C15.968 2 20 6.032 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.6589 9C15.8357 6.66906 13.6136 5 11 5C7.685 5 5 7.685 5 11H7C7 8.792 8.792 7 11 7C11.6912 7 12.3417 7.17563 12.9092 7.48467L12 9H16.6589ZM17 11H15C15 13.208 13.208 15 11 15C10.3088 15 9.65828 14.8244 9.0908 14.5153L10 13H7.53567H5.34109C6.16433 15.3309 8.38635 17 11 17C14.315 17 17 14.315 17 11Z"
+        ></path>
+      </svg>
     </i>
     <i title="保存" @click="handleSave">
       <svg
@@ -542,6 +595,36 @@ const handleRedo = () => {
     documentStore.setSelectedCells(nextData.selectedCells || [])
   }
 }
+
+const toggleFontItalic = () => {
+  if (!documentStore.selectedCells.length) return
+
+  documentStore.selectedCells
+    .map((it) => lookupCellData(documentStore.gridData, it)!)
+    .forEach((cell) => {
+      cell.fontItalic = !cell.fontItalic
+    })
+}
+
+const toggleFontThrough = () => {
+  if (!documentStore.selectedCells.length) return
+
+  documentStore.selectedCells
+    .map((it) => lookupCellData(documentStore.gridData, it)!)
+    .forEach((cell) => {
+      cell.fontThrough = !cell.fontThrough
+    })
+}
+
+const toggleFontUnderline = () => {
+  if (!documentStore.selectedCells.length) return
+
+  documentStore.selectedCells
+    .map((it) => lookupCellData(documentStore.gridData, it)!)
+    .forEach((cell) => {
+      cell.fontUnderline = !cell.fontUnderline
+    })
+}
 </script>
 
 <style scoped lang="scss">
@@ -641,6 +724,13 @@ const handleRedo = () => {
     border-color: #40a9ff;
     box-shadow: 0 0 0 2px rgba(24, 144, 255, 0.2);
   }
+}
+
+.divider {
+  width: 1px;
+  height: 20px;
+  background-color: #e0e0e0;
+  margin: 0 4px;
 }
 
 .clear-button {

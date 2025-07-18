@@ -235,6 +235,8 @@ const handleMouse = (event: Event, type: string) => {
       :contenteditable="isCellSelected"
       :style="{
         'font-size': model.fontSize ? model.fontSize + 'rem' : '0.8rem',
+        'font-style': model.fontItalic ? 'italic' : undefined,
+        'text-decoration': [model.fontThrough ? 'line-through' : undefined, model.fontUnderline ? 'underline' : undefined].filter(Boolean).join(' ').trim() || undefined,
         'min-width': sizeNumber + 'px',
         'min-height': sizeNumber + 'px',
         color:
