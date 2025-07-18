@@ -215,6 +215,7 @@ const handleMouse = (event: Event, type: string) => {
     :style="{
       'background-color': searchStore.isSearchVisible && searchStore.highlight(model.text || '') ? 'white' : model.backgroundColor,
       'flex-direction': model.flexDirection,
+      'align-items': model.flexDirection === 'row' ? 'center' : undefined,
     }"
     @mousedown="(e) => handleMouse(e, 'mousedown')"
     @mouseenter="(e) => handleMouse(e, 'mouseenter')"

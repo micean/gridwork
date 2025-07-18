@@ -519,6 +519,10 @@ const handleColorSelect = (color: string) => {
   documentStore.selectedCells
     .map((it) => lookupCellData(documentStore.gridData, it)!)
     .forEach((cell) => {
+      if(['white', '#fff', '#ffffff', '#FFF', '#FFFFFF', 'rgb(255, 255, 255)'].includes(color)) {
+        cell.backgroundColor = undefined
+        return
+      }
       cell.backgroundColor = color
     })
 
