@@ -88,7 +88,7 @@ export const registerKeys = () => {
     } else {
       const parentPath = documentStore.selectedCells[0].substring(
         0,
-        documentStore.selectedCells[0].indexOf('>'),
+        documentStore.selectedCells[0].lastIndexOf('>'),
       )
       const gridData = lookupCellData(documentStore.gridData, parentPath)
       const cells = gridData?.innerGrid?.flatMap((row, rowIdx) =>
@@ -108,8 +108,16 @@ export const registerKeys = () => {
 
 export const wheelEventListener = (event: WheelEvent) => {
   const documentStore = useDocumentStore()
-
-  if (event.shiftKey && documentStore.selectedCells.length > 0) {
+  if (event.ctrlKey) {
+    if (event.deltaY < 0) {
+      // 滚轮前滚 - 放大
+      documentStore.zoomIn()
+    } else {
+      // 滚轮后滚 - 缩小
+      documentStore.zoomOut()
+    }
+  } else if (event.shiftKey && documentStore.selectedCells.length > 0) {
+    // Shift+滚轮调整字体大小
     // event.preventDefault()
 
     const delta = event.deltaY > 0 ? -0.1 : 0.1 // 向下滚动减小，向上滚动增大
@@ -120,5 +128,33 @@ export const wheelEventListener = (event: WheelEvent) => {
         changeGridFontSize(cell, delta)
       }
     })
+  }
+}
+
+// 阻止浏览器的Ctrl+滚轮缩放
+export const preventBrowserZoom = () => {
+  const handleWheel = (event: WheelEvent) => {
+    if (event.ctrlKey) {
+      event.preventDefault()
+    }
+  }
+
+  const handleKeydown = (event: KeyboardEvent) => {
+    if (
+      (event.ctrlKey || event.metaKey) &&
+      (event.key === '+' || event.key === '-' || event.key === '=')
+    ) {
+      event.preventDefault()
+    }
+  }
+
+  // 添加被动监听器
+  document.addEventListener('wheel', handleWheel, { passive: false })
+  document.addEventListener('keydown', handleKeydown, { passive: false })
+
+  // 返回清理函数
+  return () => {
+    document.removeEventListener('wheel', handleWheel)
+    document.removeEventListener('keydown', handleKeydown)
   }
 }

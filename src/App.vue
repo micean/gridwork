@@ -9,7 +9,7 @@ import { useHistoryStore } from '@/stores/history.ts'
 import { createDBManager, DOCUMENTS_STORE } from '@/utils/db.ts'
 import type { DocumentData } from '../env'
 import { copyEventListener, cutEventListener, pasteEventListener } from '@/utils/clipboard.ts'
-import { wheelEventListener } from '@/keys.ts'
+import { wheelEventListener, preventBrowserZoom } from '@/keys.ts'
 
 const gridData = createGridData(4, 4)
 const vars = ref({
@@ -122,7 +122,7 @@ const handleClickOutside = (event: Event) => {
   // 原有的弹窗关闭逻辑
   if (!target.closest('.color-popup') && !target.closest('[title="颜色"]')) {
     toolBar.value?.closePopup('color')
-  };
+  }
   if (!target.closest('.font-size-popup') && !target.closest('[title="字体大小"]')) {
     toolBar.value?.closePopup('fontSize')
   }
@@ -131,10 +131,7 @@ const handleClickOutside = (event: Event) => {
   }
 }
 const handleEditorBlur = () => {
-  historyStore.addHistory(
-    JSON.stringify(documentStore.gridData),
-    documentStore.selectedCells,
-  )
+  historyStore.addHistory(JSON.stringify(documentStore.gridData), documentStore.selectedCells)
 }
 
 const startEditingDocumentName = () => {
@@ -156,9 +153,14 @@ const cancelEditingDocumentName = () => {
   vars.value.documentName = documentStore.title
 }
 
+let cleanupZoom: (() => void) | null = null
+
 onMounted(() => {
   // 初始化数据库
   initDatabase()
+
+  // 阻止浏览器默认缩放
+  cleanupZoom = preventBrowserZoom()
 
   document.addEventListener('paste', pasteEventListener)
   document.addEventListener('copy', copyEventListener)
@@ -173,6 +175,11 @@ onUnmounted(() => {
   document.removeEventListener('cut', cutEventListener)
   document.removeEventListener('wheel', wheelEventListener)
   window.removeEventListener('editor-blur', handleEditorBlur as EventListener)
+
+  // 清理浏览器缩放阻止
+  if (cleanupZoom) {
+    cleanupZoom()
+  }
 })
 </script>
 
@@ -217,12 +224,17 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="header-right">
-          <HeaderToolbar ref="toolBar"/>
+          <HeaderToolbar ref="toolBar" />
         </div>
       </header>
 
       <main class="editor-area" @click="handleClickOutside">
-        <TableComponent v-model="documentStore.gridData" />
+        <TableComponent
+          v-model="documentStore.gridData"
+          :style="{
+            borderStyle: documentStore.isZoomed() ? 'dotted' : undefined,
+          }"
+        />
       </main>
     </div>
   </div>

@@ -66,6 +66,10 @@ const nonRightBorder = computed(() => {
     documentStore.isCellSelected(props.path) && !documentStore.selectedBorder(props.path, 'right')
   )
 })
+const untouchable = computed(() => {
+  console.log('documentStore.zoomScalePath:', JSON.stringify(documentStore.zoomScalePath))
+  return documentStore.zoomScalePath && props.path.split('>').length === 1
+})
 
 const handleInput = (event: Event) => {
   const target = event.target as HTMLElement
@@ -135,7 +139,7 @@ const detectMouseEdit = (event: Event) => {
 }
 
 const handleClick = (event: CustomEvent) => {
-  if (event.detail.path === props.path) {
+  if (event.detail.path === props.path && untouchable.value) {
     event.preventDefault()
     event.stopPropagation()
     if (!isCellSelected.value) {
@@ -147,7 +151,7 @@ const handleClick = (event: CustomEvent) => {
   }
 }
 const handleCellFocusByKey = (event: { path: string; startEdit?: boolean }) => {
-  if (event.path === props.path) {
+  if (event.path === props.path && untouchable.value) {
     if (!isCellSelected.value) {
       documentStore.addCellOnClick(props.path)
     }
@@ -193,6 +197,7 @@ onUnmounted(() => {
 })
 
 const handleMouse = (event: Event, type: string) => {
+  if(untouchable.value) return;
   switch (type) {
     case 'mousedown':
       event.stopPropagation()
@@ -211,6 +216,7 @@ const handleMouse = (event: Event, type: string) => {
     :id="model.id"
     :class="{
       'cell-content': true,
+      untouchable,
       focus: isCellSelected,
       'non-top-bd': nonTopBorder,
       'non-bottom-bd': nonBottomBorder,

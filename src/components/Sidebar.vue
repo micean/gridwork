@@ -5,9 +5,6 @@
       <button class="new-doc-btn header-btn" @click="createNewDocument" :disabled="isLoading" title="新建文档">
         <span>+</span>
       </button>
-      <button class="close-btn header-btn" @click="closeSidebar" title="关闭侧边栏">
-        <span>×</span>
-      </button>
     </div>
 
     <div class="sidebar-content">

@@ -2,7 +2,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import emitter from "@/utils/bus.ts";
 import type { CellData, DocumentData } from '../../env'
-import { nanoid } from '@/utils/data.ts'
+import {lookupCellData, lookupInnerGrid, nanoid} from '@/utils/data.ts'
 import { DOCUMENTS_STORE, type IndexedDBManager } from '@/utils/db.ts'
 
 const compareCellPath = (startCellParts: string[], endCellParts: string[], length: number) => {
@@ -44,6 +44,8 @@ export const useDocumentStore = defineStore('document', () => {
   const id = ref<string>(nanoid())
   const title = ref<string>('')
   const gridData = ref<CellData[][]>([])
+  const originalGridData = ref<CellData[][]>([])
+  const zoomScalePath = ref('')
   const createdAt = ref<string>(new Date().toUTCString())
   const selectedCells = ref<string[]>([])
   const editingCell = ref<string | null>(null)
@@ -115,6 +117,68 @@ export const useDocumentStore = defineStore('document', () => {
     } else {
       addCellOnClick(cell)
     }
+  }
+
+  const isZoomed = () => {
+    return originalGridData.value.length > 0 && zoomScalePath.value.length > 0
+  }
+
+  const zoomIn = () => {
+    if(!selectedCells.value.length)
+      return
+    const selectedParts = selectedCells.value[0].split('>')
+    if(selectedParts.length < 2)
+      return
+    const rootPart = selectedParts[0]
+    if(!isZoomed()){
+      originalGridData.value = gridData.value;
+      zoomScalePath.value = rootPart;
+      selectedCells.value = selectedCells.value.map(it => {
+        const parts = it.split('>')
+        parts[0] = '[0,0]'
+        return parts.join('>')
+      }).filter(it => it.includes('>'))
+    }else{
+      zoomScalePath.value += '>' + selectedParts[1];
+      selectedCells.value = selectedCells.value.map(it => {
+        const parts = it.split('>').slice(1)
+        parts[0] = '[0,0]'
+        return parts.join('>')
+      }).filter(it => it.includes('>'))
+    }
+    const root = lookupCellData(originalGridData.value, zoomScalePath.value)!
+    gridData.value = [[root]]
+  }
+
+  const zoomOut = () => {
+    if(!isZoomed())
+      return
+    const zoomParts = zoomScalePath.value.split('>')
+    const parentPart = zoomParts.pop()
+    zoomScalePath.value = zoomParts.join('>')
+    selectedCells.value = parentPart ? selectedCells.value.map(it => {
+      const parts = it.split('>')
+      parts[0] = '[0,0]>' + parentPart
+      return parts.join('>')
+    }).filter(it => it.includes('>')) : selectedCells.value
+    if(zoomScalePath.value.length){
+      const root = lookupCellData(originalGridData.value, zoomScalePath.value)!
+      gridData.value = [[root]]
+    }else{
+      exitZoom();
+    }
+  }
+
+  const exitZoom = () => {
+    if(zoomScalePath.value){
+      selectedCells.value = selectedCells.value.map(it => {
+        const parts = it.split('>')
+        parts[0] = zoomScalePath.value
+        return parts.join('>')
+      })
+    }
+    zoomScalePath.value = ''
+    gridData.value = originalGridData.value
   }
 
   const selectParentOrClear = () => {
@@ -250,6 +314,7 @@ export const useDocumentStore = defineStore('document', () => {
     id,
     title,
     gridData,
+    zoomScalePath,
     selectedCells,
     editingCell,
     loadDoc,
@@ -260,6 +325,10 @@ export const useDocumentStore = defineStore('document', () => {
     addCellOnClick,
     removeCell,
     toggleCell,
+    isZoomed,
+    zoomIn,
+    zoomOut,
+    exitZoom,
     selectParentOrClear,
     clearSelection,
     isCellSelected,

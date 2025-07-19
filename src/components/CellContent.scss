@@ -16,6 +16,9 @@
   &.focus:hover:not(:has(.cell-content:hover)) {
     background-color: #e6f3ff;
   }
+  &.untouchable{
+    background-color: #f5f5f5;
+  }
 
   @media (max-width: 768px) {
     padding: 8px;
