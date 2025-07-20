@@ -67,7 +67,6 @@ const nonRightBorder = computed(() => {
   )
 })
 const untouchable = computed(() => {
-  console.log('documentStore.zoomScalePath:', JSON.stringify(documentStore.zoomScalePath))
   return documentStore.zoomScalePath && props.path.split('>').length === 1
 })
 
@@ -139,7 +138,7 @@ const detectMouseEdit = (event: Event) => {
 }
 
 const handleClick = (event: CustomEvent) => {
-  if (event.detail.path === props.path && untouchable.value) {
+  if (event.detail.path === props.path && !untouchable.value) {
     event.preventDefault()
     event.stopPropagation()
     if (!isCellSelected.value) {
@@ -151,7 +150,7 @@ const handleClick = (event: CustomEvent) => {
   }
 }
 const handleCellFocusByKey = (event: { path: string; startEdit?: boolean }) => {
-  if (event.path === props.path && untouchable.value) {
+  if (event.path === props.path && !untouchable.value) {
     if (!isCellSelected.value) {
       documentStore.addCellOnClick(props.path)
     }

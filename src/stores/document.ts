@@ -86,12 +86,12 @@ export const useDocumentStore = defineStore('document', () => {
       const doc = getDocument();
       const documentId = await dbManager?.put(DOCUMENTS_STORE, doc)
       if(documentId){
-        console.log('文档保存成功', documentId, doc)
+        console.log('document saved', documentId, doc)
         localStorage.setItem('lastDocumentId', documentId.toString())
       }
       return documentId
     } catch (error) {
-      console.error('保存项目失败:', error)
+      console.error('failed to save document:', error)
       throw error
     }
   }

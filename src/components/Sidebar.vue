@@ -93,7 +93,7 @@ const loadDocument = async (documentId: string) => {
       emit('selected', document)
     }
   } catch (error) {
-    console.error('加载文档失败:', error)
+    console.error('failed to load document:', error)
     throw error
   } finally {
     isLoading.value = false
@@ -145,8 +145,8 @@ const deleteDocument = async (documentId: string) => {
     // 刷新文档列表
     await loadAllDocuments()
   } catch (error) {
-    console.error('删除文档失败:', error)
-    alert('删除文档失败，请重试')
+    console.error('failed to delete document:', error)
+    alert('failed to delete document，please try again')
   } finally {
     isLoading.value = false
   }

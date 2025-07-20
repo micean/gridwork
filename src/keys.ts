@@ -4,12 +4,17 @@ import { useHistoryStore } from '@/stores/history.ts'
 import emitter from '@/utils/bus.ts'
 import { lookupCellData, changeGridFontSize } from '@/utils/data.ts'
 import { getDBManager } from '@/utils/db.ts'
+import type {Store} from "pinia";
 
 export const registerKeys = () => {
   const documentStore = useDocumentStore()
   const historyStore = useHistoryStore()
 
   Mousetrap.bind('esc', () => {
+    if(documentStore.isZoomed() && documentStore.selectedCells.length && documentStore.selectedCells[0].split('>').length === 2) {
+      documentStore.exitZoom();
+      return
+    }
     documentStore.selectParentOrClear()
   })
   Mousetrap.bind('enter', (event) => {
@@ -118,17 +123,18 @@ export const wheelEventListener = (event: WheelEvent) => {
     }
   } else if (event.shiftKey && documentStore.selectedCells.length > 0) {
     // Shift+滚轮调整字体大小
-    // event.preventDefault()
-
     const delta = event.deltaY > 0 ? -0.1 : 0.1 // 向下滚动减小，向上滚动增大
-
-    documentStore.selectedCells.forEach((cellPath) => {
-      const cell = lookupCellData(documentStore.gridData, cellPath)
-      if (cell) {
-        changeGridFontSize(cell, delta)
-      }
-    })
+    changeFontSize(documentStore, delta)
   }
+}
+
+function changeFontSize(documentStore: any, delta: number) {
+  documentStore.selectedCells.forEach((cellPath: string) => {
+    const cell = lookupCellData(documentStore.gridData, cellPath)
+    if (cell) {
+      changeGridFontSize(cell, delta)
+    }
+  })
 }
 
 // 阻止浏览器的Ctrl+滚轮缩放

@@ -43,7 +43,7 @@ const writeToClipboard = async (event: ClipboardEvent, plainText: string, htmlTe
     }
     return true
   } catch (error) {
-    console.error('无法写入剪贴板内容:', error)
+    console.error('failed to write to clipboard:', error)
     return false
   }
 }
@@ -171,7 +171,7 @@ export const pasteEventListener = async (event: ClipboardEvent) => {
 
     }
   } catch (error) {
-    console.error('无法读取剪贴板内容:', error)
+    console.error('failed to read from clipboard:', error)
   }
 }
 
@@ -188,8 +188,6 @@ export const copyEventListener = async (event: ClipboardEvent) => {
 
   const { plainText, htmlText } = getClipboardData()
   await writeToClipboard(event, plainText, htmlText)
-
-  console.log('已复制到剪贴板:', plainText)
 }
 
 export const cutEventListener = async (event: ClipboardEvent) => {
@@ -207,8 +205,6 @@ export const cutEventListener = async (event: ClipboardEvent) => {
   const success = await writeToClipboard(event, plainText, htmlText)
 
   if (success) {
-    console.log('已剪切到剪贴板:', plainText)
-
     // 清空选中的单元格内容（剪切操作）
     documentStore.selectedCells.forEach(cellPath => {
       const cell = lookupCellData(documentStore.gridData, cellPath)
