@@ -7,6 +7,7 @@ import { isCursorAtHead, isCursorAtTail, selectionOnTail } from '@/utils/edit.ts
 import { createGridData, pickGridData } from '@/utils/data.ts'
 import emitter from '@/utils/bus.ts'
 import { useSearchStore } from '@/stores/search.ts'
+import { getDBManager } from '@/utils/db.ts'
 
 interface Props {
   path: string
@@ -91,6 +92,24 @@ const handleEsc = (event: Event) => {
   const target = event.target as HTMLElement
   if (target === document.activeElement) {
     target.blur()
+  }
+}
+
+const handleKeyDown = (event: KeyboardEvent) => {
+  // 只处理Ctrl+S组合键，遮蔽其他S组合键
+  if (event.key === 's' && event.ctrlKey && !event.altKey && !event.shiftKey && !event.metaKey) {
+    // 仅Ctrl+S，不包含其他修饰键
+    event.preventDefault()
+    event.stopPropagation()
+
+    // 保存当前单元格内容
+    if (isEditing.value && cellInput.value) {
+      model.value.text = cellInput.value.textContent || ''
+
+      // 触发保存事件
+      const dbManager = getDBManager()
+      documentStore.saveDocument(dbManager)
+   }
   }
 }
 
@@ -216,7 +235,8 @@ const handleMouse = (event: Event, type: string) => {
     :class="{
       'cell-content': true,
       untouchable,
-      focus: isCellSelected,
+      'focus': isCellSelected,
+      'hide-content': sizeNumber <= 2,
       'non-top-bd': nonTopBorder,
       'non-bottom-bd': nonBottomBorder,
       'non-left-bd': nonLeftBorder,
@@ -259,6 +279,7 @@ const handleMouse = (event: Event, type: string) => {
       @keydown.down="(e) => handleInputArrow(e, 'down')"
       @keydown.left="(e) => handleInputArrow(e, 'left')"
       @keydown.right="(e) => handleInputArrow(e, 'right')"
+      @keydown="handleKeyDown"
       @mousedown="detectMouseEdit"
       >{{ vars.content }}</code
     >

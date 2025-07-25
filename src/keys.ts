@@ -5,6 +5,7 @@ import emitter from '@/utils/bus.ts'
 import { lookupCellData, changeGridFontSize } from '@/utils/data.ts'
 import { getDBManager } from '@/utils/db.ts'
 import type {Store} from "pinia";
+import type { CellData } from '../env'
 
 export const registerKeys = () => {
   const documentStore = useDocumentStore()
@@ -123,12 +124,16 @@ export const wheelEventListener = (event: WheelEvent) => {
     }
   } else if (event.shiftKey && documentStore.selectedCells.length > 0) {
     // Shift+滚轮调整字体大小
+    event.preventDefault() // 阻止默认的滚动行为
+    event.stopPropagation() // 阻止事件冒泡
+    
     const delta = event.deltaY > 0 ? -0.1 : 0.1 // 向下滚动减小，向上滚动增大
     changeFontSize(documentStore, delta)
+    return false
   }
 }
 
-function changeFontSize(documentStore: any, delta: number) {
+function changeFontSize(documentStore: { selectedCells: string[], gridData: CellData[][] }, delta: number) {
   documentStore.selectedCells.forEach((cellPath: string) => {
     const cell = lookupCellData(documentStore.gridData, cellPath)
     if (cell) {

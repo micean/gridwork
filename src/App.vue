@@ -165,7 +165,7 @@ onMounted(() => {
   document.addEventListener('paste', pasteEventListener)
   document.addEventListener('copy', copyEventListener)
   document.addEventListener('cut', cutEventListener)
-  document.addEventListener('wheel', wheelEventListener)
+  document.addEventListener('wheel', wheelEventListener, { passive: false })
   window.addEventListener('editor-blur', handleEditorBlur as EventListener)
 })
 

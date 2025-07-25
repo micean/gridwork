@@ -10,6 +10,15 @@
   position: relative;
   user-select: none;
 
+  &.hide-content{
+    background-image: repeating-linear-gradient(
+        -45deg, /* 倾斜角度，负值表示从右下到左上 */
+        rgba(0, 0, 0, 0.3), /* 线条颜色 */
+        rgba(0, 0, 0, 0.3) 1px, /* 线条粗细 */
+        transparent 1px, /* 透明间隔开始 */
+        transparent 4px /* 透明间隔结束，控制线条间距 */
+    );
+  }
   &:hover:not(:has(.cell-content:hover)) {
     background-color: #f5f5f5;
   }
