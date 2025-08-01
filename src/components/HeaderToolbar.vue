@@ -314,6 +314,42 @@
         <path d="M5 18L12.6796 12L5 6V4H19V6H8.26348L16 12L8.26348 18H19V20H5V18Z"></path>
       </svg>
     </i>
+    <i title="分享到局域网" @click="toggleSharePopup" style="position: relative" :class="{ active: peerStore.isConnected }">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M13.1202 17.0228L8.92129 14.7324C8.19135 15.5125 7.15261 16 6 16C3.79086 16 2 14.2091 2 12C2 9.79086 3.79086 8 6 8C7.15255 8 8.19125 8.48746 8.92118 9.26746L13.1202 6.97713C13.0417 6.66441 13 6.33707 13 6C13 3.79086 14.7909 2 17 2C19.2091 2 21 3.79086 21 6C21 8.20914 19.2091 10 17 10C15.8474 10 14.8087 9.51251 14.0787 8.73246L9.87977 11.0228C9.9583 11.3355 10 11.6629 10 12C10 12.3371 9.95831 12.6644 9.87981 12.9771L14.0788 15.2675C14.8087 14.4875 15.8474 14 17 14C19.2091 14 21 15.7909 21 18C21 20.2091 19.2091 22 17 22C14.7909 22 13 20.2091 13 18C13 17.6629 13.0417 17.3355 13.1202 17.0228ZM6 14C7.10457 14 8 13.1046 8 12C8 10.8954 7.10457 10 6 10C4.89543 10 4 10.8954 4 12C4 13.1046 4.89543 14 6 14ZM17 8C18.1046 8 19 7.10457 19 6C19 4.89543 18.1046 4 17 4C15.8954 4 15 4.89543 15 6C15 7.10457 15.8954 8 17 8ZM17 20C18.1046 20 19 19.1046 19 18C19 16.8954 18.1046 16 17 16C15.8954 16 15 16.8954 15 18C15 19.1046 15.8954 20 17 20Z"></path></svg>
+
+      <!-- 分享弹出层 -->
+      <div v-if="vars.showSharePopup" class="share-popup" @click="(e) => e.stopPropagation()">
+        <div class="popup-content">
+          <div class="popup-header">
+            <span>局域网分享文档</span>
+            <div class="header-controls">
+              <SwitchButton v-model="vars.peerConnectionEnabled" />
+              <button class="close-button" @click="toggleSharePopup">
+                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
+                  <path d="M12 10.586L16.95 5.636L18.364 7.05L13.414 12L18.364 16.95L16.95 18.364L12 13.414L7.05 18.364L5.636 16.95L10.586 12L5.636 7.05L7.05 5.636L12 10.586Z"></path>
+                </svg>
+              </button>
+            </div>
+          </div>
+          <div class="popup-body">
+            <div class="share-info">
+              <p>1. 连接0.peerjs.com</p>
+              <p v-if="peerStore.shareStatus" class="status-text">{{ peerStore.shareStatus }}</p>
+              <p>2. 复制下方链接发给对方</p>
+              <div v-if="peerStore.shareLink" class="share-link-container">
+                <input
+                  type="text"
+                  :value="peerStore.shareLink"
+                  readonly
+                  class="share-link-input"
+                />
+                <button class="copy-button" @click="copyShareLink">复制</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </i>
     <i title="撤消" @click="handleUndo" :class="{ disabled: !historyStore.canUndo }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -346,6 +382,7 @@
 <script setup lang="ts">
 import Slider from './Slider.vue'
 import ColorPicker from './ColorPicker.vue'
+import SwitchButton from './SwitchButton.vue'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useDocumentStore } from '@/stores/document.ts'
 import type { CellData } from '../../env'
@@ -360,15 +397,18 @@ import emitter from '@/utils/bus.ts'
 import { useSearchStore } from '@/stores/search.ts'
 import { useHistoryStore } from '@/stores/history.ts'
 import { getDBManager } from '@/utils/db.ts'
+import { usePeerStore } from '@/stores/peer'
 
 defineExpose({
-  closePopup: (dialog: 'fontSize' | 'color' | 'search') => {
+  closePopup: (dialog: 'fontSize' | 'color' | 'search' | 'share') => {
     if (dialog === 'fontSize') {
       vars.value.showFontSizePopup = false
     } else if (dialog === 'color') {
       vars.value.showColorPopup = false
     } else if (dialog === 'search') {
       vars.value.showSearchPopup = false
+    } else if (dialog === 'share') {
+      vars.value.showSharePopup = false
     }
   },
 })
@@ -378,12 +418,15 @@ const vars = ref({
   showFontSizePopup: false,
   showColorPopup: false,
   showSearchPopup: false,
+  showSharePopup: false,
   searchQuery: '',
   replaceQuery: '',
+  peerConnectionEnabled: false,
 })
 const documentStore = useDocumentStore()
 const historyStore = useHistoryStore()
 const searchStore = useSearchStore()
+const peerStore = usePeerStore()
 
 const dbManager = getDBManager()
 
@@ -420,6 +463,24 @@ watch(
   () => vars.value.searchQuery,
   (newText) => {
     searchStore.setSearchQuery(newText)
+  },
+)
+watch(
+  () => vars.value.peerConnectionEnabled,
+  (enabled) => {
+    if (enabled) {
+      // 启用Peer连接
+      peerStore.cleanupPeer()
+      peerStore.setOnConnectedListener(() => {
+        if (peerStore.isConnected) {
+          peerStore.broadcast({ type: 'document', data: JSON.parse(JSON.stringify(documentStore.gridData))})
+        }
+      })
+      peerStore.initializePeer()
+    } else {
+      // 禁用Peer连接
+      peerStore.cleanupPeer()
+    }
   },
 )
 
@@ -621,6 +682,15 @@ const handleSummation = () => {
   lastCell.text = sum.toString()
 }
 
+const toggleSharePopup = () => {
+  vars.value.showSharePopup = !vars.value.showSharePopup
+
+  if (vars.value.showSharePopup) {
+    // 打开分享弹窗时初始化Peer连接
+    vars.value.peerConnectionEnabled = peerStore.isConnected
+  }
+}
+
 const handleUndo = () => {
   const previousData = historyStore.undo()
   if (previousData) {
@@ -731,6 +801,16 @@ const findMatchingCells = (searchTerm: string): string[] => {
 
 const escapeRegExp = (string: string): string => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+const copyShareLink = async () => {
+  try {
+    await navigator.clipboard.writeText(peerStore.shareLink)
+    // 可以添加一个简单的提示
+    console.log('链接已复制到剪贴板')
+  } catch (error) {
+    console.error('复制失败:', error)
+  }
 }
 </script>
 
@@ -907,6 +987,107 @@ const escapeRegExp = (string: string): string => {
   svg {
     width: 14px;
     height: 14px;
+  }
+}
+
+.share-popup {
+  position: absolute;
+  top: 100%;
+  right: 0;
+  margin-top: 8px;
+  background: white;
+  border: 1px solid #e0e0e0;
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  width: 400px;
+}
+
+.share-info {
+  padding: 16px;
+  line-height: 1.6;
+  color: #333;
+  font-size: 14px;
+}
+
+.share-info p {
+  margin: 8px 0;
+}
+
+.status-text {
+  color: #1890ff;
+  font-size: 12px;
+  margin-left: 8px;
+}
+
+.share-link-container {
+  display: flex;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.share-link-input {
+  flex: 1;
+  padding: 6px 8px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  font-size: 12px;
+  background-color: #f5f5f5;
+  cursor: pointer;
+}
+
+.copy-button {
+  padding: 6px 12px;
+  border: 1px solid #1890ff;
+  border-radius: 4px;
+  background: #1890ff;
+  color: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+
+  &:hover {
+    background: #40a9ff;
+    border-color: #40a9ff;
+  }
+}
+
+.popup-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e0e0e0;
+  font-weight: 500;
+  font-size: 16px;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.popup-header .close-button {
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: #999;
+  padding: 4px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 4px;
+  transition: all 0.2s ease;
+
+  &:hover {
+    color: #666;
+    background-color: #f0f0f0;
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
   }
 }
 </style>

@@ -6,10 +6,12 @@ import { createGridData } from '@/utils/data.ts'
 import { nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useDocumentStore } from '@/stores/document.ts'
 import { useHistoryStore } from '@/stores/history.ts'
+import { usePeerStore } from '@/stores/peer.ts'
 import { createDBManager, DOCUMENTS_STORE } from '@/utils/db.ts'
 import type { DocumentData } from '../env'
 import { copyEventListener, cutEventListener, pasteEventListener } from '@/utils/clipboard.ts'
-import { wheelEventListener, preventBrowserZoom } from '@/keys.ts'
+import { preventBrowserZoom, wheelEventListener } from '@/keys.ts'
+import type { DataMessage } from '@/utils/peer.ts'
 
 const gridData = createGridData(4, 4)
 const vars = ref({
@@ -21,6 +23,7 @@ const vars = ref({
 })
 const documentStore = useDocumentStore()
 const historyStore = useHistoryStore()
+const peerStore = usePeerStore()
 const toolBar = ref<InstanceType<typeof HeaderToolbar> | null>(null)
 const sidebarRef = ref<InstanceType<typeof Sidebar> | null>(null)
 
@@ -102,6 +105,38 @@ const handleCreateDocument = async (document: DocumentData) => {
   }
 }
 
+// 处理接收到的peer数据
+const handlePeerData = (data: DataMessage) => {
+  console.log('=== 接收到peer数据 ===')
+  console.log('时间:', new Date().toLocaleString())
+  console.log('数据类型:', typeof data)
+  console.log('原始数据:', data)
+  console.log('JSON格式:', JSON.stringify(data, null, 2))
+  console.log('===================')
+}
+
+// 处理URL中的peerId参数
+const handleUrlPeerId = async () => {
+  const urlParams = new URLSearchParams(window.location.search)
+  const peerIdFromUrl = urlParams.get('peerId')
+
+  if (peerIdFromUrl) {
+    console.log('检测到URL中的peerId:', peerIdFromUrl)
+
+    try {
+      // 获取peerManager实例
+      peerStore.receiveData((data: DataMessage) => {
+        handlePeerData(data)
+      })
+      await peerStore.initializePeer()
+      await peerStore.connectToPeer(peerIdFromUrl)
+      console.log('连接成功')
+    } catch (error) {
+      console.error('连接失败:', error)
+    }
+  }
+}
+
 const toggleSidebar = () => {
   vars.value.isSidebarOpen = !vars.value.isSidebarOpen
 }
@@ -159,6 +194,9 @@ onMounted(() => {
   // 初始化数据库
   initDatabase()
 
+  // 处理URL中的peerId参数
+  handleUrlPeerId()
+
   // 阻止浏览器默认缩放
   cleanupZoom = preventBrowserZoom()
 
@@ -175,6 +213,9 @@ onUnmounted(() => {
   document.removeEventListener('cut', cutEventListener)
   document.removeEventListener('wheel', wheelEventListener)
   window.removeEventListener('editor-blur', handleEditorBlur as EventListener)
+
+  // 清理peer连接
+  peerStore.cleanupPeer()
 
   // 清理浏览器缩放阻止
   if (cleanupZoom) {
