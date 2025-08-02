@@ -16,7 +16,7 @@ export const usePeerStore = defineStore('peer', () => {
   const onErrorListener = ref<(error: Error) => void>(() => {})
 
   const baseUrl = computed(() => {
-    return window.location.origin || 'https://micean.github.io/gridwork'
+    return 'https://micean.github.io/gridwork'
   })
 
   const fullShareLink = computed(() => {
