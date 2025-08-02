@@ -9,6 +9,7 @@ import {
   tablizeGrid
 } from '@/utils/data.ts'
 import type { CellData } from '../../env'
+import {useModeStore} from "@/stores/mode.ts";
 
 /**
  * 获取选中单元格的剪贴板数据
@@ -50,8 +51,9 @@ const writeToClipboard = async (event: ClipboardEvent, plainText: string, htmlTe
 
 export const pasteEventListener = async (event: ClipboardEvent) => {
   const documentStore = useDocumentStore()
+  const modeStore = useModeStore()
   // 如果有单元格正在编辑，不处理粘贴事件
-  if (documentStore.editingCell || !documentStore.selectedCells.length) {
+  if (modeStore.readonly || documentStore.editingCell || !documentStore.selectedCells.length) {
     return
   }
 

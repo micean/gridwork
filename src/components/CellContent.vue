@@ -8,6 +8,7 @@ import { createGridData, pickGridData } from '@/utils/data.ts'
 import emitter from '@/utils/bus.ts'
 import { useSearchStore } from '@/stores/search.ts'
 import { getDBManager } from '@/utils/db.ts'
+import {useModeStore} from "@/stores/mode.ts";
 
 interface Props {
   path: string
@@ -24,13 +25,14 @@ const props = withDefaults(defineProps<Props>(), {
 })
 const documentStore = useDocumentStore()
 const searchStore = useSearchStore()
+const modeStore = useModeStore()
 const cellInput = useTemplateRef('cellInput')
 
 const isCellSelected = computed(() => {
   return documentStore.isCellSelected(props.path)
 })
 const isEditing = computed(() => {
-  return documentStore.isEditingCell(props.path)
+  return !modeStore.readonly && documentStore.isEditingCell(props.path)
 })
 
 watch(
@@ -162,7 +164,7 @@ const handleClick = (event: CustomEvent) => {
     event.stopPropagation()
     if (!isCellSelected.value) {
       documentStore.addCellOnClick(props.path)
-    } else if (!isEditing.value) {
+    } else if (!isEditing.value && !modeStore.readonly) {
       documentStore.setEditingCell(props.path)
       cellInput.value?.focus()
     }
@@ -183,14 +185,14 @@ const handleCellFocusByKey = (event: { path: string; startEdit?: boolean }) => {
 }
 
 const handlePressDelete = (event: { path: string }) => {
-  if (event.path === props.path) {
+  if (event.path === props.path && !modeStore.readonly) {
     model.value.text = ''
     model.value.innerGrid = undefined
     cellInput.value!.textContent = ''
   }
 }
 const handlePressInsert = (event: { path: string; gridPath?: string[] }) => {
-  if (event.path === props.path) {
+  if (event.path === props.path && !modeStore.readonly) {
     if (!model.value.innerGrid) {
       model.value.innerGrid = event.gridPath
         ? pickGridData(documentStore.gridData, event.gridPath)
@@ -257,7 +259,7 @@ const handleMouse = (event: Event, type: string) => {
       ref="cellInput"
       v-show="sizeNumber > 2"
       :class="['cell-input', { editing: isEditing }]"
-      :contenteditable="isCellSelected"
+      :contenteditable="!modeStore.readonly && isCellSelected"
       :style="{
         'font-size': model.fontSize ? model.fontSize + 'rem' : '0.8rem',
         'font-style': model.fontItalic ? 'italic' : undefined,

@@ -2,7 +2,12 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import emitter from "@/utils/bus.ts";
 import type { CellData, DocumentData } from '../../env'
-import {lookupCellData, lookupInnerGrid, nanoid} from '@/utils/data.ts'
+import {
+  createGridData,
+  lookupCellData,
+  nanoid,
+  tryLookupInnerGrid
+} from '@/utils/data.ts'
 import { DOCUMENTS_STORE, type IndexedDBManager } from '@/utils/db.ts'
 
 const compareCellPath = (startCellParts: string[], endCellParts: string[], length: number) => {
@@ -64,7 +69,21 @@ export const useDocumentStore = defineStore('document', () => {
   }
 
   const setupGrid = (data: CellData[][]) => {
-    gridData.value = data
+    if(isZoomed()) {
+      originalGridData.value = data.length ? data : createGridData(1, 1)
+      const { realGridData, realParts } = tryLookupInnerGrid(
+        originalGridData.value,
+        zoomScalePath.value.split('>').map((it) => JSON.parse(it) as [number, number])
+      )
+      gridData.value = realGridData
+      zoomScalePath.value = realParts.map(it => JSON.stringify(it)).join('>')
+      selectedCells.value = tryLookupInnerGrid(
+        gridData.value,
+        selectedCells.value.map(it => JSON.parse(it))
+      ).realParts.map(it => JSON.stringify(it))
+      return
+    }
+    gridData.value = data.length ? data : createGridData(1, 1)
   }
 
   const updateDocumentName = (name: string) => {
@@ -75,13 +94,15 @@ export const useDocumentStore = defineStore('document', () => {
     return {
       id: id.value,
       name: title.value,
-      gridData: JSON.parse(JSON.stringify(gridData.value)),
+      gridData: JSON.parse(JSON.stringify(isZoomed() ? originalGridData.value : gridData.value)),
       createdAt: createdAt.value,
       updatedAt: new Date().toUTCString(),
     }
   }
 
   const saveDocument = async (dbManager: IndexedDBManager | null) => {
+    if(isZoomed())
+      return
     try {
       const doc = getDocument();
       const documentId = await dbManager?.put(DOCUMENTS_STORE, doc)
@@ -104,16 +125,16 @@ export const useDocumentStore = defineStore('document', () => {
     selectedCells.value.push(cell)
   }
 
-  const removeCell = (cell: string) => {
+  const removeSelectedCell = (cell: string) => {
     const index = selectedCells.value.indexOf(cell)
     if (index > -1) {
       selectedCells.value.splice(index, 1)
     }
   }
 
-  const toggleCell = (cell: string) => {
+  const toggleSelectCell = (cell: string) => {
     if (isCellSelected(cell)) {
-      removeCell(cell)
+      removeSelectedCell(cell)
     } else {
       addCellOnClick(cell)
     }
@@ -179,6 +200,7 @@ export const useDocumentStore = defineStore('document', () => {
     }
     zoomScalePath.value = ''
     gridData.value = originalGridData.value
+    originalGridData.value = []
   }
 
   const selectParentOrClear = () => {
@@ -314,6 +336,7 @@ export const useDocumentStore = defineStore('document', () => {
     id,
     title,
     gridData,
+    originalGridData,
     zoomScalePath,
     selectedCells,
     editingCell,
@@ -323,8 +346,8 @@ export const useDocumentStore = defineStore('document', () => {
     getDocument,
     saveDocument,
     addCellOnClick,
-    removeCell,
-    toggleCell,
+    removeCell: removeSelectedCell,
+    toggleCell: toggleSelectCell,
     isZoomed,
     zoomIn,
     zoomOut,

@@ -6,10 +6,12 @@ import { lookupCellData, changeGridFontSize } from '@/utils/data.ts'
 import { getDBManager } from '@/utils/db.ts'
 import type {Store} from "pinia";
 import type { CellData } from '../env'
+import {useModeStore} from "@/stores/mode.ts";
 
 export const registerKeys = () => {
   const documentStore = useDocumentStore()
   const historyStore = useHistoryStore()
+  const modeStore = useModeStore()
 
   Mousetrap.bind('esc', () => {
     if(documentStore.isZoomed() && documentStore.selectedCells.length && documentStore.selectedCells[0].split('>').length === 2) {
@@ -40,14 +42,16 @@ export const registerKeys = () => {
     documentStore.focusAnotherCell('right')
   })
   Mousetrap.bind(['del', 'backspace'], () => {
+    if(modeStore.readonly) return
     documentStore.selectedCells.forEach((path) => {
       emitter.emit('cell-delete', { path })
     })
   })
   Mousetrap.bind('ins', (event) => {
-    if (!documentStore.selectedCells.length) return
     event.preventDefault()
     event.stopPropagation()
+    if (!documentStore.selectedCells.length) return
+    if(modeStore.readonly) return
 
     if (documentStore.selectedCells.length === 1) {
       const path = documentStore.selectedCells[0]
@@ -62,6 +66,7 @@ export const registerKeys = () => {
   Mousetrap.bind(['ctrl+z', 'command+z'], (event) => {
     event.preventDefault()
     event.stopPropagation()
+    if(modeStore.readonly) return
     if (historyStore.canUndo) {
       const previousData = historyStore.undo()
       if (previousData) {
@@ -74,6 +79,7 @@ export const registerKeys = () => {
   Mousetrap.bind(['ctrl+y', 'command+y', 'ctrl+shift+z', 'command+shift+z'], (event) => {
     event.preventDefault()
     event.stopPropagation()
+    if(modeStore.readonly) return
     if (historyStore.canRedo) {
       const nextData = historyStore.redo()
       if (nextData) {
@@ -107,6 +113,7 @@ export const registerKeys = () => {
   Mousetrap.bind('ctrl+s', (event) => {
     event.preventDefault()
     event.stopPropagation()
+    if (modeStore.readonly || documentStore.isZoomed()) return;
     const dbManager = getDBManager()
     documentStore.saveDocument(dbManager)
   })
@@ -114,6 +121,7 @@ export const registerKeys = () => {
 
 export const wheelEventListener = (event: WheelEvent) => {
   const documentStore = useDocumentStore()
+  const modeStore = useModeStore()
   if (event.ctrlKey) {
     if (event.deltaY < 0) {
       // 滚轮前滚 - 放大
@@ -122,11 +130,11 @@ export const wheelEventListener = (event: WheelEvent) => {
       // 滚轮后滚 - 缩小
       documentStore.zoomOut()
     }
-  } else if (event.shiftKey && documentStore.selectedCells.length > 0) {
+  } else if (event.shiftKey && !modeStore.readonly && documentStore.selectedCells.length > 0) {
     // Shift+滚轮调整字体大小
     event.preventDefault() // 阻止默认的滚动行为
     event.stopPropagation() // 阻止事件冒泡
-    
+
     const delta = event.deltaY > 0 ? -0.1 : 0.1 // 向下滚动减小，向上滚动增大
     changeFontSize(documentStore, delta)
     return false

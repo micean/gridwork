@@ -12,6 +12,8 @@ export const usePeerStore = defineStore('peer', () => {
   const isInitialized = ref<boolean>(false)
   const onDataListener = ref<(data: DataMessage) => void>(() => {})
   const onConnectedListener = ref<(peerId: string) => void>(() => {})
+  const onDisconnectedListener = ref<(peerId: string) => void>(() => {})
+  const onErrorListener = ref<(error: Error) => void>(() => {})
 
   const baseUrl = computed(() => {
     return window.location.origin || 'https://micean.github.io/gridwork'
@@ -40,6 +42,8 @@ export const usePeerStore = defineStore('peer', () => {
           shareLink.value = fullShareLink.value
         },
         onError: (error: Error) => {
+          if(onErrorListener.value)
+            onErrorListener.value(error)
           shareStatus.value = `连接失败: ${error.message}`
         },
         onConnection: (connection: DataConnection) => {
@@ -48,13 +52,15 @@ export const usePeerStore = defineStore('peer', () => {
           connections.value = [...connections.value, connection.peer]
         },
         onDisconnection: (peerId: string) => {
+          if(onDisconnectedListener.value)
+            onDisconnectedListener.value(peerId)
           connections.value = connections.value.filter(id => id !== peerId)
         },
         onData: (data: DataMessage) => {
           console.log('Received data:', data)
           // 处理接收到的数据
-          if (data.type === 'welcome') {
-            console.log('Welcome message received:', data.payload)
+          if (onDataListener.value) {
+            onDataListener.value(data)
           }
         }
       })
@@ -77,6 +83,10 @@ export const usePeerStore = defineStore('peer', () => {
     shareLink.value = ''
     connections.value = []
     isInitialized.value = false
+    onDataListener.value = () => {}
+    onConnectedListener.value = () => {}
+    onDisconnectedListener.value = () => {}
+    onErrorListener.value = () => {}
   }
 
   async function connectToPeer(peerId: string) {
@@ -99,6 +109,14 @@ export const usePeerStore = defineStore('peer', () => {
 
   function setOnConnectedListener(fn: (peerId: string) => void) {
     onConnectedListener.value = fn
+  }
+
+  function setOnDisconnectedListener(fn: (peerId: string) => void) {
+    onDisconnectedListener.value = fn
+  }
+
+  function setOnErrorListener(fn: (error: Error) => void) {
+    onErrorListener.value = fn
   }
 
   async function broadcast(data: unknown) {
@@ -139,6 +157,8 @@ export const usePeerStore = defineStore('peer', () => {
     sendToPeer,
     receiveData,
     setOnConnectedListener,
+    setOnDisconnectedListener,
+    setOnErrorListener,
     broadcast,
     getConnectionStatus
   }

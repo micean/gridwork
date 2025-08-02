@@ -12,6 +12,7 @@ import type { DocumentData } from '../env'
 import { copyEventListener, cutEventListener, pasteEventListener } from '@/utils/clipboard.ts'
 import { preventBrowserZoom, wheelEventListener } from '@/keys.ts'
 import type { DataMessage } from '@/utils/peer.ts'
+import { useModeStore } from '@/stores/mode.ts'
 
 const gridData = createGridData(4, 4)
 const vars = ref({
@@ -20,10 +21,13 @@ const vars = ref({
   documentName: '📄untitled',
   isEditingDocumentName: false,
   isSidebarOpen: false,
+  connectionStatus: null as string | null,
+  showConnectionOverlay: false,
 })
 const documentStore = useDocumentStore()
 const historyStore = useHistoryStore()
 const peerStore = usePeerStore()
+const modeStore = useModeStore()
 const toolBar = ref<InstanceType<typeof HeaderToolbar> | null>(null)
 const sidebarRef = ref<InstanceType<typeof Sidebar> | null>(null)
 
@@ -46,7 +50,9 @@ const initDatabase = async () => {
     console.log('database initialized')
 
     // 尝试加载最近的文档
-    await loadRecentDocument()
+    if (!modeStore.readonly) {
+      await loadRecentDocument()
+    }
   } catch (error) {
     console.error('database initialization failed:', error)
     vars.value.dbError = 'database initialization failed，please try again'
@@ -80,6 +86,7 @@ const handleSelectDocument = async (document: DocumentData) => {
     vars.value.documentName = document.name
     localStorage.setItem('lastDocumentId', document.id)
     currentDocumentId.value = document.id
+    modeStore.setReadonly(false)
   } catch (error) {
     console.error('load document failed:', error)
     throw error
@@ -98,6 +105,7 @@ const handleCreateDocument = async (document: DocumentData) => {
     vars.value.documentName = document.name
     localStorage.setItem('lastDocumentId', document.id)
     currentDocumentId.value = document.id
+    modeStore.setReadonly(false)
   } catch (error) {
     console.error('create document failed:', error)
   } finally {
@@ -107,32 +115,57 @@ const handleCreateDocument = async (document: DocumentData) => {
 
 // 处理接收到的peer数据
 const handlePeerData = (data: DataMessage) => {
-  console.log('=== 接收到peer数据 ===')
-  console.log('时间:', new Date().toLocaleString())
-  console.log('数据类型:', typeof data)
-  console.log('原始数据:', data)
-  console.log('JSON格式:', JSON.stringify(data, null, 2))
-  console.log('===================')
+  const { type, payload } = data
+  if (type === 'document') {
+    const doc = payload.data as DocumentData
+    documentStore.loadDoc(doc)
+    vars.value.documentName = doc.name
+  }
 }
 
 // 处理URL中的peerId参数
 const handleUrlPeerId = async () => {
   const urlParams = new URLSearchParams(window.location.search)
-  const peerIdFromUrl = urlParams.get('peerId')
+  const peerId = urlParams.get('peerId')
 
-  if (peerIdFromUrl) {
-    console.log('检测到URL中的peerId:', peerIdFromUrl)
+  if (peerId) {
+    // 显示连接中状态
+    vars.value.connectionStatus = `正在连接到 ${peerId}...`
+    vars.value.showConnectionOverlay = true
 
     try {
       // 获取peerManager实例
+      peerStore.setOnErrorListener((error: Error) => {
+        console.error('连接失败:', error)
+        vars.value.connectionStatus = `连接失败: ${error.message}`
+        peerStore.cleanupPeer()
+        // 3秒后隐藏浮动层
+        setTimeout(() => {
+          vars.value.showConnectionOverlay = false
+        }, 3000)
+      })
       peerStore.receiveData((data: DataMessage) => {
         handlePeerData(data)
       })
       await peerStore.initializePeer()
-      await peerStore.connectToPeer(peerIdFromUrl)
-      console.log('连接成功')
+      await peerStore.connectToPeer(peerId)
+
+      // 连接成功
+      vars.value.connectionStatus = `已连接到 ${peerId}`
+      modeStore.setReadonly(true)
+
+      // 2秒后隐藏浮动层
+      setTimeout(() => {
+        vars.value.showConnectionOverlay = false
+      }, 2000)
     } catch (error) {
       console.error('连接失败:', error)
+      vars.value.connectionStatus = `连接失败: ${error instanceof Error ? error.message : '未知错误'}`
+      peerStore.cleanupPeer()
+      // 3秒后隐藏浮动层
+      setTimeout(() => {
+        vars.value.showConnectionOverlay = false
+      }, 3000)
     }
   }
 }
@@ -166,10 +199,16 @@ const handleClickOutside = (event: Event) => {
   }
 }
 const handleEditorBlur = () => {
+  if (modeStore.readonly) return
   historyStore.addHistory(JSON.stringify(documentStore.gridData), documentStore.selectedCells)
+  if (peerStore.isConnected) {
+    const data = documentStore.getDocument()
+    peerStore.broadcast({ type: 'document', data })
+  }
 }
 
 const startEditingDocumentName = () => {
+  if (modeStore.readonly) return
   vars.value.isEditingDocumentName = true
   nextTick(() => {
     const input = document.querySelector('.document-name-input') as HTMLInputElement
@@ -181,6 +220,10 @@ const startEditingDocumentName = () => {
 const saveDocumentName = () => {
   vars.value.isEditingDocumentName = false
   documentStore.updateDocumentName(vars.value.documentName)
+  if (peerStore.isConnected) {
+    const data = documentStore.getDocument()
+    peerStore.broadcast({ type: 'document', data })
+  }
 }
 
 const cancelEditingDocumentName = () => {
@@ -191,11 +234,10 @@ const cancelEditingDocumentName = () => {
 let cleanupZoom: (() => void) | null = null
 
 onMounted(() => {
-  // 初始化数据库
-  initDatabase()
-
   // 处理URL中的peerId参数
   handleUrlPeerId()
+  // 初始化数据库
+  initDatabase()
 
   // 阻止浏览器默认缩放
   cleanupZoom = preventBrowserZoom()
@@ -246,7 +288,7 @@ onUnmounted(() => {
           <div class="document-name-container">
             <span
               v-if="!vars.isEditingDocumentName"
-              class="document-name"
+              :class="{ 'document-name': true, readonly: modeStore.readonly }"
               @dblclick="startEditingDocumentName"
               :title="vars.documentName"
             >
@@ -272,11 +314,19 @@ onUnmounted(() => {
       <main class="editor-area" @click="handleClickOutside">
         <TableComponent
           v-model="documentStore.gridData"
+          :class="{ readonly: modeStore.readonly }"
           :style="{
             borderStyle: documentStore.isZoomed() ? 'dotted' : undefined,
           }"
         />
       </main>
+    </div>
+  </div>
+
+  <!-- 连接状态浮动层 -->
+  <div v-if="vars.showConnectionOverlay" class="connection-overlay">
+    <div class="connection-content">
+      {{ vars.connectionStatus }}
     </div>
   </div>
 </template>

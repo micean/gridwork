@@ -57,6 +57,24 @@ export const lookupInnerGrid = (gridData: CellData[][], parts: PathString | Path
     return it.innerGrid || []
   }, gridData)
 }
+export const tryLookupInnerGrid = (gridData: CellData[][], parts: PathString | PathNumber) => {
+  if (!parts.length) {
+    return { realGridData: gridData, realParts: [] }
+  }
+  if (typeof parts === 'string') {
+    parts = parts.split('>').map((it) => JSON.parse(it))
+  }
+  const realParts = [] as [number, number][]
+  const realGridData = parts.reduce((acc, cur) => {
+    const [row, col] = cur
+    if(acc[row] && acc[row][col]) {
+      realParts.push(cur)
+    }
+    const it = acc[row][col]
+    return it.innerGrid || []
+  }, gridData)
+  return { realGridData, realParts }
+}
 
 /**
  * 递归更新单元格及其所有嵌套单元格的字体大小
