@@ -8,7 +8,7 @@ import { createGridData, pickGridData } from '@/utils/data.ts'
 import emitter from '@/utils/bus.ts'
 import { useSearchStore } from '@/stores/search.ts'
 import { getDBManager } from '@/utils/db.ts'
-import {useModeStore} from "@/stores/mode.ts";
+import { useModeStore } from '@/stores/mode.ts'
 
 interface Props {
   path: string
@@ -46,7 +46,7 @@ watch(
 )
 
 const sizeNumber = computed(() => {
-  const fontSize = model.value.fontSize || 0.8;
+  const fontSize = model.value.fontSize || 0.8
   return 2 + (fontSize - 0.4) * 37.5
 })
 const nonTopBorder = computed(() => {
@@ -111,7 +111,7 @@ const handleKeyDown = (event: KeyboardEvent) => {
       // 触发保存事件
       const dbManager = getDBManager()
       documentStore.saveDocument(dbManager)
-   }
+    }
   }
 }
 
@@ -217,7 +217,7 @@ onUnmounted(() => {
 })
 
 const handleMouse = (event: Event, type: string) => {
-  if(untouchable.value) return;
+  if (untouchable.value) return
   switch (type) {
     case 'mousedown':
       event.stopPropagation()
@@ -237,7 +237,7 @@ const handleMouse = (event: Event, type: string) => {
     :class="{
       'cell-content': true,
       untouchable,
-      'focus': isCellSelected,
+      focus: isCellSelected,
       'hide-content': sizeNumber <= 2,
       'non-top-bd': nonTopBorder,
       'non-bottom-bd': nonBottomBorder,
@@ -246,7 +246,7 @@ const handleMouse = (event: Event, type: string) => {
     }"
     :style="{
       'background-color':
-        searchStore.isSearchVisible && searchStore.highlight(model.text || '') || isEditing
+        (searchStore.isSearchVisible && searchStore.highlight(model.text || '')) || isEditing
           ? 'white'
           : model.backgroundColor,
       'flex-direction': model.flexDirection,
@@ -262,8 +262,16 @@ const handleMouse = (event: Event, type: string) => {
       :contenteditable="!modeStore.readonly && isCellSelected"
       :style="{
         'font-size': model.fontSize ? model.fontSize + 'rem' : '0.8rem',
+        'font-weight': model.fontBold ? 'bold' : undefined,
         'font-style': model.fontItalic ? 'italic' : undefined,
-        'text-decoration': [model.fontThrough ? 'line-through' : undefined, model.fontUnderline ? 'underline' : undefined].filter(Boolean).join(' ').trim() || undefined,
+        'text-decoration':
+          [
+            model.fontThrough ? 'line-through' : undefined,
+            model.fontUnderline ? 'underline' : undefined,
+          ]
+            .filter(Boolean)
+            .join(' ')
+            .trim() || undefined,
         'min-width': sizeNumber + 'px',
         'min-height': sizeNumber + 'px',
         color:

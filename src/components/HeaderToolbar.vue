@@ -52,7 +52,11 @@
         ></path>
       </svg>
     </i>
-    <i title="删除行" @click="removeRowCol('row')" :class="{ disabled: modeStore.readonly || !hasSelection }">
+    <i
+      title="删除行"
+      @click="removeRowCol('row')"
+      :class="{ disabled: modeStore.readonly || !hasSelection }"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -65,7 +69,11 @@
         ></path>
       </svg>
     </i>
-    <i title="删除列" @click="removeRowCol('col')" :class="{ disabled: modeStore.readonly || !hasSelection }">
+    <i
+      title="删除列"
+      @click="removeRowCol('col')"
+      :class="{ disabled: modeStore.readonly || !hasSelection }"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -79,7 +87,11 @@
       </svg>
     </i>
     <div class="divider"></div>
-    <i title="插入子级" @click="insertChild" :class="{ disabled: modeStore.readonly || !hasSelection }">
+    <i
+      title="插入子级"
+      @click="insertChild"
+      :class="{ disabled: modeStore.readonly || !hasSelection }"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -92,7 +104,11 @@
         ></path>
       </svg>
     </i>
-    <i title="调整内部布局" @click="toggleLayout" :class="{ disabled: modeStore.readonly || !hasSelection }">
+    <i
+      title="调整内部布局"
+      @click="toggleLayout"
+      :class="{ disabled: modeStore.readonly || !hasSelection }"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -146,7 +162,28 @@
         </div>
       </div>
     </i>
-    <i title="斜体" @click="toggleFontItalic" :class="{ disabled: modeStore.readonly || !hasSelection }">
+    <i
+      title="斜体"
+      @click="toggleFontBold"
+      :class="{ disabled: modeStore.readonly || !hasSelection }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M8 11H12.5C13.8807 11 15 9.88071 15 8.5C15 7.11929 13.8807 6 12.5 6H8V11ZM18 15.5C18 17.9853 15.9853 20 13.5 20H6V4H12.5C14.9853 4 17 6.01472 17 8.5C17 9.70431 16.5269 10.7981 15.7564 11.6058C17.0979 12.3847 18 13.837 18 15.5ZM8 13V18H13.5C14.8807 18 16 16.8807 16 15.5C16 14.1193 14.8807 13 13.5 13H8Z"
+        ></path>
+      </svg>
+    </i>
+    <i
+      title="斜体"
+      @click="toggleFontItalic"
+      :class="{ disabled: modeStore.readonly || !hasSelection }"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -157,7 +194,11 @@
         <path d="M15 20H7V18H9.92661L12.0425 6H9V4H17V6H14.0734L11.9575 18H15V20Z"></path>
       </svg>
     </i>
-    <i title="删除线" @click="toggleFontThrough" :class="{ disabled: modeStore.readonly || !hasSelection }">
+    <i
+      title="删除线"
+      @click="toggleFontThrough"
+      :class="{ disabled: modeStore.readonly || !hasSelection }"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -170,7 +211,11 @@
         ></path>
       </svg>
     </i>
-    <i title="下划线" @click="toggleFontUnderline" :class="{ disabled: modeStore.readonly || !hasSelection }">
+    <i
+      title="下划线"
+      @click="toggleFontUnderline"
+      :class="{ disabled: modeStore.readonly || !hasSelection }"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -263,14 +308,22 @@
               <button
                 class="replace-button"
                 @click="replaceCurrent"
-                :disabled="modeStore.readonly || !vars.searchQuery || findMatchingCells(vars.searchQuery).length === 0"
+                :disabled="
+                  modeStore.readonly ||
+                  !vars.searchQuery ||
+                  findMatchingCells(vars.searchQuery).length === 0
+                "
               >
                 替换
               </button>
               <button
                 class="replace-button"
                 @click="replaceAll"
-                :disabled="modeStore.readonly || !vars.searchQuery || findMatchingCells(vars.searchQuery).length === 0"
+                :disabled="
+                  modeStore.readonly ||
+                  !vars.searchQuery ||
+                  findMatchingCells(vars.searchQuery).length === 0
+                "
               >
                 全部替换
               </button>
@@ -279,19 +332,37 @@
         </div>
       </div>
     </i>
-    <i
-      title="放大"
-      @click="handleZoom('in')"
-      :class="{ disabled: !hasSelection }">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.032 20 2 15.968 2 11C2 6.032 6.032 2 11 2C15.968 2 20 6.032 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.0247 15.8748C17.2475 14.6146 18 12.8956 18 11C18 7.1325 14.8675 4 11 4C7.1325 4 4 7.1325 4 11C4 14.8675 7.1325 18 11 18C12.8956 18 14.6146 17.2475 15.8748 16.0247L16.0247 15.8748ZM10 10V7H12V10H15V12H12V15H10V12H7V10H10Z"></path></svg>
+    <i title="放大" @click="handleZoom('in')" :class="{ disabled: !hasSelection }">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.032 20 2 15.968 2 11C2 6.032 6.032 2 11 2C15.968 2 20 6.032 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.0247 15.8748C17.2475 14.6146 18 12.8956 18 11C18 7.1325 14.8675 4 11 4C7.1325 4 4 7.1325 4 11C4 14.8675 7.1325 18 11 18C12.8956 18 14.6146 17.2475 15.8748 16.0247L16.0247 15.8748ZM10 10V7H12V10H15V12H12V15H10V12H7V10H10Z"
+        ></path>
+      </svg>
+    </i>
+    <i title="缩小" @click="handleZoom('out')" :class="{ disabled: !documentStore.isZoomed() }">
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.032 20 2 15.968 2 11C2 6.032 6.032 2 11 2C15.968 2 20 6.032 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.0247 15.8748C17.2475 14.6146 18 12.8956 18 11C18 7.1325 14.8675 4 11 4C7.1325 4 4 7.1325 4 11C4 14.8675 7.1325 18 11 18C12.8956 18 14.6146 17.2475 15.8748 16.0247L16.0247 15.8748ZM7 10H15V12H7V10Z"
+        ></path>
+      </svg>
     </i>
     <i
-      title="缩小"
-      @click="handleZoom('out')"
-      :class="{ disabled: !documentStore.isZoomed() }">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" fill="currentColor"><path d="M18.031 16.6168L22.3137 20.8995L20.8995 22.3137L16.6168 18.031C15.0769 19.263 13.124 20 11 20C6.032 20 2 15.968 2 11C2 6.032 6.032 2 11 2C15.968 2 20 6.032 20 11C20 13.124 19.263 15.0769 18.031 16.6168ZM16.0247 15.8748C17.2475 14.6146 18 12.8956 18 11C18 7.1325 14.8675 4 11 4C7.1325 4 4 7.1325 4 11C4 14.8675 7.1325 18 11 18C12.8956 18 14.6146 17.2475 15.8748 16.0247L16.0247 15.8748ZM7 10H15V12H7V10Z"></path></svg>
-    </i>
-    <i title="保存" @click="handleSave" :class="{ disabled: modeStore.readonly || documentStore.isZoomed() }">
+      title="保存"
+      @click="handleSave"
+      :class="{ disabled: modeStore.readonly || documentStore.isZoomed() }"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -315,8 +386,23 @@
         <path d="M5 18L12.6796 12L5 6V4H19V6H8.26348L16 12L8.26348 18H19V20H5V18Z"></path>
       </svg>
     </i>
-    <i title="分享到局域网" @click="toggleSharePopup" style="position: relative" :class="{ disabled: modeStore.readonly }">
-      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="20" height="20" :fill="peerStore.isConnected ? '#1890ff' : 'currentColor'"><path d="M13.1202 17.0228L8.92129 14.7324C8.19135 15.5125 7.15261 16 6 16C3.79086 16 2 14.2091 2 12C2 9.79086 3.79086 8 6 8C7.15255 8 8.19125 8.48746 8.92118 9.26746L13.1202 6.97713C13.0417 6.66441 13 6.33707 13 6C13 3.79086 14.7909 2 17 2C19.2091 2 21 3.79086 21 6C21 8.20914 19.2091 10 17 10C15.8474 10 14.8087 9.51251 14.0787 8.73246L9.87977 11.0228C9.9583 11.3355 10 11.6629 10 12C10 12.3371 9.95831 12.6644 9.87981 12.9771L14.0788 15.2675C14.8087 14.4875 15.8474 14 17 14C19.2091 14 21 15.7909 21 18C21 20.2091 19.2091 22 17 22C14.7909 22 13 20.2091 13 18C13 17.6629 13.0417 17.3355 13.1202 17.0228ZM6 14C7.10457 14 8 13.1046 8 12C8 10.8954 7.10457 10 6 10C4.89543 10 4 10.8954 4 12C4 13.1046 4.89543 14 6 14ZM17 8C18.1046 8 19 7.10457 19 6C19 4.89543 18.1046 4 17 4C15.8954 4 15 4.89543 15 6C15 7.10457 15.8954 8 17 8ZM17 20C18.1046 20 19 19.1046 19 18C19 16.8954 18.1046 16 17 16C15.8954 16 15 16.8954 15 18C15 19.1046 15.8954 20 17 20Z"></path></svg>
+    <i
+      title="分享到局域网"
+      @click="toggleSharePopup"
+      style="position: relative"
+      :class="{ disabled: modeStore.readonly }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        :fill="peerStore.isConnected ? '#1890ff' : 'currentColor'"
+      >
+        <path
+          d="M13.1202 17.0228L8.92129 14.7324C8.19135 15.5125 7.15261 16 6 16C3.79086 16 2 14.2091 2 12C2 9.79086 3.79086 8 6 8C7.15255 8 8.19125 8.48746 8.92118 9.26746L13.1202 6.97713C13.0417 6.66441 13 6.33707 13 6C13 3.79086 14.7909 2 17 2C19.2091 2 21 3.79086 21 6C21 8.20914 19.2091 10 17 10C15.8474 10 14.8087 9.51251 14.0787 8.73246L9.87977 11.0228C9.9583 11.3355 10 11.6629 10 12C10 12.3371 9.95831 12.6644 9.87981 12.9771L14.0788 15.2675C14.8087 14.4875 15.8474 14 17 14C19.2091 14 21 15.7909 21 18C21 20.2091 19.2091 22 17 22C14.7909 22 13 20.2091 13 18C13 17.6629 13.0417 17.3355 13.1202 17.0228ZM6 14C7.10457 14 8 13.1046 8 12C8 10.8954 7.10457 10 6 10C4.89543 10 4 10.8954 4 12C4 13.1046 4.89543 14 6 14ZM17 8C18.1046 8 19 7.10457 19 6C19 4.89543 18.1046 4 17 4C15.8954 4 15 4.89543 15 6C15 7.10457 15.8954 8 17 8ZM17 20C18.1046 20 19 19.1046 19 18C19 16.8954 18.1046 16 17 16C15.8954 16 15 16.8954 15 18C15 19.1046 15.8954 20 17 20Z"
+        ></path>
+      </svg>
 
       <!-- 分享弹出层 -->
       <div v-if="vars.showSharePopup" class="share-popup" @click="(e) => e.stopPropagation()">
@@ -326,8 +412,16 @@
             <div class="header-controls">
               <SwitchButton v-model="vars.peerConnectionEnabled" />
               <button class="close-button" @click="toggleSharePopup">
-                <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="16" height="16" fill="currentColor">
-                  <path d="M12 10.586L16.95 5.636L18.364 7.05L13.414 12L18.364 16.95L16.95 18.364L12 13.414L7.05 18.364L5.636 16.95L10.586 12L5.636 7.05L7.05 5.636L12 10.586Z"></path>
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  viewBox="0 0 24 24"
+                  width="16"
+                  height="16"
+                  fill="currentColor"
+                >
+                  <path
+                    d="M12 10.586L16.95 5.636L18.364 7.05L13.414 12L18.364 16.95L16.95 18.364L12 13.414L7.05 18.364L5.636 16.95L10.586 12L5.636 7.05L7.05 5.636L12 10.586Z"
+                  ></path>
                 </svg>
               </button>
             </div>
@@ -338,12 +432,7 @@
               <p v-if="peerStore.shareStatus" class="status-text">{{ peerStore.shareStatus }}</p>
               <p>2. 复制下方链接发给对方</p>
               <div v-if="peerStore.shareLink" class="share-link-container">
-                <input
-                  type="text"
-                  :value="peerStore.shareLink"
-                  readonly
-                  class="share-link-input"
-                />
+                <input type="text" :value="peerStore.shareLink" readonly class="share-link-input" />
                 <button class="copy-button" @click="copyShareLink">复制</button>
               </div>
             </div>
@@ -399,7 +488,7 @@ import { useSearchStore } from '@/stores/search.ts'
 import { useHistoryStore } from '@/stores/history.ts'
 import { getDBManager } from '@/utils/db.ts'
 import { usePeerStore } from '@/stores/peer'
-import {useModeStore} from "@/stores/mode.ts";
+import { useModeStore } from '@/stores/mode.ts'
 
 defineExpose({
   closePopup: (dialog: 'fontSize' | 'color' | 'search' | 'share') => {
@@ -453,9 +542,9 @@ watch(
       return
     }
     historyStore.addHistory(JSON.stringify(newData), documentStore.selectedCells)
-    if(peerStore.isConnected) {
+    if (peerStore.isConnected) {
       const data = documentStore.getDocument()
-      peerStore.broadcast({ type: 'document', data });
+      peerStore.broadcast({ type: 'document', data })
     }
   },
   { deep: true },
@@ -481,7 +570,7 @@ watch(
       peerStore.setOnConnectedListener(() => {
         if (peerStore.isConnected) {
           const data = documentStore.getDocument()
-          peerStore.broadcast({ type: 'document', data });
+          peerStore.broadcast({ type: 'document', data })
         }
       })
       peerStore.initializePeer()
@@ -493,7 +582,7 @@ watch(
 )
 
 const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (documentStore.selectedCells.length !== 1) return
 
   let originCellPath = documentStore.selectedCells[0]
@@ -529,7 +618,7 @@ const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
 }
 
 const removeRowCol = (type: 'row' | 'col') => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (!documentStore.selectedCells.length) return
 
   const posArr = documentStore.selectedCells.map((path) => {
@@ -583,7 +672,7 @@ const removeRowCol = (type: 'row' | 'col') => {
 }
 
 const insertChild = () => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (!documentStore.selectedCells.length) return
   if (documentStore.selectedCells.length === 1) {
     const path = documentStore.selectedCells[0]
@@ -595,7 +684,7 @@ const insertChild = () => {
 }
 
 const toggleLayout = () => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (!documentStore.selectedCells.length) return
 
   documentStore.selectedCells.forEach((it) => {
@@ -605,7 +694,7 @@ const toggleLayout = () => {
 }
 
 const toggleFontSizePopup = () => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (documentStore.selectedCells.length) {
     const firstCell = lookupCellData(documentStore.gridData, documentStore.selectedCells[0])
     vars.value.fontSize = firstCell?.fontSize || 0.8
@@ -614,7 +703,7 @@ const toggleFontSizePopup = () => {
 }
 
 const handleFontSizeChange = (fontSize: number) => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (!documentStore.selectedCells.length) return
   documentStore.selectedCells
     .map((it) => lookupCellData(documentStore.gridData, it)!)
@@ -624,14 +713,14 @@ const handleFontSizeChange = (fontSize: number) => {
 }
 
 const toggleColorPopup = () => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (documentStore.selectedCells.length) {
     vars.value.showColorPopup = !vars.value.showColorPopup
   }
 }
 
 const handleColorSelect = (color: string) => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (!documentStore.selectedCells.length) return
 
   documentStore.selectedCells
@@ -682,12 +771,12 @@ const handleZoom = (type: 'in' | 'out') => {
 }
 
 const handleSave = async () => {
-  if (modeStore.readonly || documentStore.isZoomed()) return;
+  if (modeStore.readonly || documentStore.isZoomed()) return
   await documentStore.saveDocument(dbManager)
 }
 
 const handleSummation = () => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (!summable.value) return
 
   const cells = documentStore.selectedCells.map((it) => lookupCellData(documentStore.gridData, it)!)
@@ -701,7 +790,7 @@ const handleSummation = () => {
 }
 
 const toggleSharePopup = () => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   vars.value.showSharePopup = !vars.value.showSharePopup
 
   if (vars.value.showSharePopup) {
@@ -711,7 +800,7 @@ const toggleSharePopup = () => {
 }
 
 const handleUndo = () => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   const previousData = historyStore.undo()
   if (previousData) {
     documentStore.setupGrid(JSON.parse(previousData.gridData))
@@ -720,12 +809,22 @@ const handleUndo = () => {
 }
 
 const handleRedo = () => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   const nextData = historyStore.redo()
   if (nextData) {
     documentStore.setupGrid(JSON.parse(nextData.gridData))
     documentStore.setSelectedCells(nextData.selectedCells || [])
   }
+}
+
+const toggleFontBold = () => {
+  if (!documentStore.selectedCells.length) return
+
+  documentStore.selectedCells
+    .map((it) => lookupCellData(documentStore.gridData, it)!)
+    .forEach((cell) => {
+      cell.fontBold = !cell.fontBold
+    })
 }
 
 const toggleFontItalic = () => {
@@ -739,7 +838,7 @@ const toggleFontItalic = () => {
 }
 
 const toggleFontThrough = () => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (!documentStore.selectedCells.length) return
 
   documentStore.selectedCells
@@ -750,7 +849,7 @@ const toggleFontThrough = () => {
 }
 
 const toggleFontUnderline = () => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (!documentStore.selectedCells.length) return
 
   documentStore.selectedCells
@@ -761,7 +860,7 @@ const toggleFontUnderline = () => {
 }
 
 const replaceCurrent = () => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (!vars.value.searchQuery) return
 
   // 获取所有匹配的单元格
@@ -779,7 +878,7 @@ const replaceCurrent = () => {
 }
 
 const replaceAll = () => {
-  if (modeStore.readonly) return;
+  if (modeStore.readonly) return
   if (!vars.value.searchQuery) return
 
   // 获取所有匹配的单元格
@@ -865,7 +964,6 @@ const copyShareLink = async () => {
       opacity: 0.4;
       cursor: not-allowed;
     }
-
   }
 }
 
