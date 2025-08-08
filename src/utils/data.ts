@@ -67,7 +67,7 @@ export const tryLookupInnerGrid = (gridData: CellData[][], parts: PathString | P
   const realParts = [] as [number, number][]
   const realGridData = parts.reduce((acc, cur) => {
     const [row, col] = cur
-    if(acc[row] && acc[row][col]) {
+    if (acc[row] && acc[row][col]) {
       realParts.push(cur)
     }
     const it = acc[row][col]
@@ -79,9 +79,9 @@ export const tryLookupInnerGrid = (gridData: CellData[][], parts: PathString | P
 /**
  * 递归更新单元格及其所有嵌套单元格的字体大小
  * @param cell 要更新的单元格
- * @param fontSize 新的字体大小
+ * @param fontSize 新的字体大小，可以是undefined表示重置为默认
  */
-export const updateCellFontSizeRecursive = (cell: CellData, fontSize: number) => {
+export const updateCellFontSizeRecursive = (cell: CellData, fontSize: number | undefined) => {
   // 更新当前单元格的字体大小
   cell.fontSize = fontSize
 
@@ -92,23 +92,6 @@ export const updateCellFontSizeRecursive = (cell: CellData, fontSize: number) =>
         updateCellFontSizeRecursive(nestedCell, fontSize)
       })
     })
-  }
-}
-
-/**
- * 根据路径查找并更新单元格及其嵌套单元格的字体大小
- * @param gridData 根网格数据
- * @param cellPath 单元格路径
- * @param fontSize 新的字体大小
- */
-export const updateCellFontSizeByPath = (
-  gridData: CellData[][],
-  cellPath: string,
-  fontSize: number,
-) => {
-  const cell = lookupCellData(gridData, cellPath)
-  if (cell) {
-    updateCellFontSizeRecursive(cell, fontSize)
   }
 }
 

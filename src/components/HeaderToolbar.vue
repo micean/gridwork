@@ -158,6 +158,7 @@
               :format="(value) => `${value}rem`"
               @change="handleFontSizeChange"
             />
+            <button class="default-font-size-button" @click="resetFontSizeToDefault">默认</button>
           </div>
         </div>
       </div>
@@ -712,6 +713,17 @@ const handleFontSizeChange = (fontSize: number) => {
     })
 }
 
+const resetFontSizeToDefault = () => {
+  if (modeStore.readonly) return
+  if (!documentStore.selectedCells.length) return
+  documentStore.selectedCells
+    .map((it) => lookupCellData(documentStore.gridData, it)!)
+    .forEach((cell) => {
+      updateCellFontSizeRecursive(cell, undefined)
+    })
+  vars.value.showFontSizePopup = false
+}
+
 const toggleColorPopup = () => {
   if (modeStore.readonly) return
   if (documentStore.selectedCells.length) {
@@ -964,6 +976,23 @@ const copyShareLink = async () => {
       opacity: 0.4;
       cursor: not-allowed;
     }
+  }
+}
+
+.default-font-size-button {
+  padding: 6px 12px;
+  border: 1px solid #d9d9d9;
+  border-radius: 4px;
+  background: white;
+  font-size: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  color: #666;
+  align-self: center;
+
+  &:hover {
+    border-color: #40a9ff;
+    color: #40a9ff;
   }
 }
 
