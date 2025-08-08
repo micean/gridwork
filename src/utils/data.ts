@@ -24,6 +24,10 @@ export const copyCellData = (original: CellData, target: CellData) => {
   target.id = original.id
   target.text = original.text
   target.fontSize = original.fontSize
+  target.fontItalic = original.fontItalic
+  target.fontThrough = original.fontThrough
+  target.fontUnderline = original.fontUnderline
+  target.flexDirection = original.flexDirection
   target.backgroundColor = original.backgroundColor
   target.innerGrid = original.innerGrid
   return target
@@ -201,22 +205,20 @@ export const parseGrid = (html: string | HTMLElement): CellData[][] | undefined 
       .map((elem) => {
         const innerTableElem = elem.querySelector(':scope>table')
         if (innerTableElem) elem.removeChild(innerTableElem)
-        const firstChildElem = [...elem.childNodes].find((node) => {
-          if (node.nodeType === Node.ELEMENT_NODE)
-            return !['TABLE', 'BR', 'HR'].includes((node as HTMLElement).tagName)
-          return false
-        })
 
         const id = nanoid()
         const text = elem.textContent?.trim() || ''
-        const fontSize = firstChildElem
-          ? parseFloat(
-              window.getComputedStyle(firstChildElem as HTMLElement).fontSize.replace('px', ''),
-            ) / 16
-          : undefined
+        const fontSize = elem.style.fontSize?.includes('rem') ? parseFloat(elem.style.fontSize.replace('rem', '')) :
+          elem.style.fontSize?.includes('em') ? parseFloat(elem.style.fontSize.replace('rem', '')) :
+          elem.style.fontSize?.includes('px') ? parseFloat(elem.style.fontSize.replace('px', '')) / 16 :
+          elem.style.fontSize?.includes('pt') ? parseFloat(elem.style.fontSize.replace('pt', '')) * 96 / 72 / 16 : undefined
+        const fontBold = elem.style.fontWeight === 'bold' || undefined
+        const fontItalic = elem.style.fontStyle === 'italic' || undefined
+        const fontThrough = elem.style.textDecoration?.includes('line-through') || undefined
+        const fontUnderline = elem.style.textDecoration?.includes('underline') || undefined
         const backgroundColor = elem.style.backgroundColor || undefined
         const innerGrid = innerTableElem ? parseGrid(innerTableElem as HTMLElement) : undefined
-        return { id, text, fontSize, backgroundColor, innerGrid }
+        return { id, text, fontSize, fontBold, fontItalic, fontThrough, fontUnderline, backgroundColor, innerGrid }
       })
     return cells
   })
