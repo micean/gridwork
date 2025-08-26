@@ -166,15 +166,22 @@ export const stringifyCell = (cell: CellData, noWrap = false, depth: number = 0)
   }
   return (noWrap ? cell.text.replace(/\r?\n/g, ' ') : cell.text) + (inner ? wrap + inner : '')
 }
+
 export const tablizeGrid = (gridData: CellData[][]): string => {
   if (!gridData.length) return ''
+  const div = document.createElement('div');
+  const escapeHtml = (text: string): string => {
+    div.textContent = text;
+    return div.innerHTML;
+  }
+
   const rows = gridData
     .map((row) => {
       return row
         .map(
           (col) =>
             `<td ${col.backgroundColor ? `style="background-color: ${col.backgroundColor}"` : ''}>
-       <code ${col.fontSize ? `style="font-size: ${col.fontSize}rem"` : ''}>${col.text}</code>
+       <code ${col.fontSize ? `style="font-size: ${col.fontSize}rem"` : ''}>${escapeHtml(col.text)}</code>
        ${tablizeGrid(col.innerGrid || [])}
        </td>`,
         )
