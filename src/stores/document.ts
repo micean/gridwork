@@ -4,7 +4,7 @@ import emitter from "@/utils/bus.ts";
 import type { CellData, DocumentData } from '../../env'
 import {
   createGridData,
-  lookupCellData,
+  lookupCellData, lookupInnerGrid,
   nanoid,
   tryLookupInnerGrid
 } from '@/utils/data.ts'
@@ -60,6 +60,7 @@ export const useDocumentStore = defineStore('document', () => {
     mouseupEvent?: () => void
     oldSelectedCells?: string[]
   }>({})
+  const lastClickedCell = ref<string | null>(null)
 
   const loadDoc = (doc: DocumentData) => {
     id.value = doc.id
@@ -219,6 +220,7 @@ export const useDocumentStore = defineStore('document', () => {
 
   const clearSelection = () => {
     selectedCells.value = []
+    lastClickedCell.value = null
   }
 
   const isCellSelected = (cell: string) => {
@@ -288,12 +290,13 @@ export const useDocumentStore = defineStore('document', () => {
 
     mouseCells.value.oldSelectedCells = selectedCells.value
     mouseCells.value.startCell = cell
+    lastClickedCell.value = cell
     mouseCells.value.mouseupEvent = () => {
       window.removeEventListener('mouseup', mouseCells.value.mouseupEvent!)
       if(mouseCells.value.oldSelectedCells?.length === selectedCells.value.length
         && mouseCells.value.oldSelectedCells?.length === 1
-        && selectedCells.value[0] === mouseCells.value.oldSelectedCells[0]) {
-        window.dispatchEvent(new CustomEvent('cell-click', {detail: {path: mouseCells.value.startCell}}));
+        && mouseCells.value.oldSelectedCells[0] === selectedCells.value[0]) {
+        window.dispatchEvent(new CustomEvent('selected-cell-click', {detail: {path: mouseCells.value.startCell}}));
       }else{
         clearDocumentFocus();
       }
@@ -332,6 +335,111 @@ export const useDocumentStore = defineStore('document', () => {
     return [rowSize, colSize]
   }
 
+  // 判断两个cell是否在同一层
+  const areCellsOnSameLevel = (cell1: string, cell2: string): boolean => {
+    const parts1 = cell1.split('>')
+    const parts2 = cell2.split('>')
+
+    // 如果层级数不同，则不在同一层
+    if (parts1.length !== parts2.length) {
+      return false
+    }
+
+    // 检查除了最后一层之外的所有父级路径是否相同
+    for (let i = 0; i < parts1.length - 1; i++) {
+      if (parts1[i] !== parts2[i]) {
+        return false
+      }
+    }
+
+    return true
+  }
+
+  // Shift+点击选择范围
+  const handleShiftClick = (targetCell: string) => {
+    // 检查是否在同一层
+    if (lastClickedCell.value && areCellsOnSameLevel(lastClickedCell.value, targetCell)) {
+      // 计算选择范围
+      const rangeCells = thoughtCells(lastClickedCell.value, targetCell)
+      selectedCells.value = rangeCells
+      return
+    }
+
+    addCellOnClick(targetCell)
+    lastClickedCell.value = targetCell
+  }
+
+  // Shift+方向键增加/减少当前选定范围
+  const handleShiftArrow = (direction: 'up' | 'down' | 'left' | 'right') => {
+    if (!selectedCells.value.length || !lastClickedCell.value) {
+      return
+    }
+
+    // 获取当前选择范围的边界
+    const startCell = lastClickedCell.value
+    
+    // 计算当前选择矩形的真正对角点
+    let currentEndCell: string
+    if (selectedCells.value.length === 1) {
+      // 如果只选中一个单元格，对角点就是自己
+      currentEndCell = startCell
+    } else {
+      // 计算当前选择范围的实际边界
+      const startParts = startCell.split('>')
+      const [startRow, startCol] = JSON.parse(startParts[startParts.length - 1])
+      const prefix = startParts.slice(0, -1).length ? startParts.slice(0, -1).join('>') + '>' : ''
+      
+      // 找到选择范围中的最大和最小坐标
+      let minRow = startRow, maxRow = startRow, minCol = startCol, maxCol = startCol
+      selectedCells.value.forEach(cell => {
+        const cellParts = cell.split('>')
+        const [row, col] = JSON.parse(cellParts[cellParts.length - 1])
+        minRow = Math.min(minRow, row)
+        maxRow = Math.max(maxRow, row)
+        minCol = Math.min(minCol, col)
+        maxCol = Math.max(maxCol, col)
+      })
+      
+      // 对角点是距离起始点最远的点
+      const endRow = startRow === minRow ? maxRow : minRow
+      const endCol = startCol === minCol ? maxCol : minCol
+      currentEndCell = `${prefix}[${endRow},${endCol}]`
+    }
+
+    // 获取当前层
+    const parts = startCell.split(">")
+    const innerGrid = parts.length === 1 ? gridData.value
+      : lookupInnerGrid(gridData.value, parts.slice(0, parts.length - 1).join(">"))
+
+    // 根据方向计算新的目标单元格
+    let newEndCell = currentEndCell
+    const endParts = currentEndCell.split('>')
+    const [endRow, endCol] = JSON.parse(endParts.pop() || '[-1,-1]')
+    const prefix = endParts.length ? endParts.join('>') + '>' : ''
+
+    if (endRow === -1 || endCol === -1) return
+
+    switch (direction) {
+      case 'up':
+        newEndCell = `${prefix}[${Math.max(0, endRow - 1)},${endCol}]`
+        break
+      case 'down':
+        const maxRow = innerGrid.length - 1
+        newEndCell = `${prefix}[${Math.min(maxRow, endRow + 1)},${endCol}]`
+        break
+      case 'left':
+        newEndCell = `${prefix}[${endRow},${Math.max(0, endCol - 1)}]`
+        break
+      case 'right':
+        const maxCol = innerGrid[0]?.length ? innerGrid[0].length - 1 : 0
+        newEndCell = `${prefix}[${endRow},${Math.min(maxCol, endCol + 1)}]`
+        break
+    }
+
+    // 使用 thoughtCells 计算新的选择范围
+    selectedCells.value = thoughtCells(startCell, newEndCell)
+  }
+
   return {
     id,
     title,
@@ -340,6 +448,8 @@ export const useDocumentStore = defineStore('document', () => {
     zoomScalePath,
     selectedCells,
     editingCell,
+    mouseCells,
+    lastClickedCell,
     loadDoc,
     setupGrid,
     updateDocumentName,
@@ -365,5 +475,8 @@ export const useDocumentStore = defineStore('document', () => {
     setEditingCell,
     isEditingCell,
     countSelectedRowColSize,
+    areCellsOnSameLevel,
+    handleShiftClick,
+    handleShiftArrow,
   }
 })

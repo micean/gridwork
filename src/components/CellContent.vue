@@ -158,7 +158,7 @@ const detectMouseEdit = (event: Event) => {
   }
 }
 
-const handleClick = (event: CustomEvent) => {
+const handleClickSelected = (event: CustomEvent) => {
   if (event.detail.path === props.path && !untouchable.value) {
     event.preventDefault()
     event.stopPropagation()
@@ -203,14 +203,14 @@ const handlePressInsert = (event: { path: string; gridPath?: string[] }) => {
 }
 
 onMounted(() => {
-  window.addEventListener('cell-click', handleClick as EventListener)
+  window.addEventListener('selected-cell-click', handleClickSelected as EventListener)
   emitter.on('cell-focus', handleCellFocusByKey)
   emitter.on('cell-delete', handlePressDelete)
   emitter.on('cell-inner', handlePressInsert)
 })
 
 onUnmounted(() => {
-  window.removeEventListener('cell-click', handleClick as EventListener)
+  window.removeEventListener('selected-cell-click', handleClickSelected as EventListener)
   emitter.off('cell-focus', handleCellFocusByKey)
   emitter.off('cell-delete', handlePressDelete)
   emitter.off('cell-inner', handlePressInsert)
@@ -222,7 +222,13 @@ const handleMouse = (event: Event, type: string) => {
     case 'mousedown':
       event.stopPropagation()
       event.preventDefault()
-      documentStore.setMouseStartCell(props.path)
+      const mouseEvent = event as MouseEvent
+
+      if (mouseEvent.shiftKey && !mouseEvent.ctrlKey && !mouseEvent.altKey && !mouseEvent.metaKey) {
+        documentStore.handleShiftClick(props.path)
+      } else {
+        documentStore.setMouseStartCell(props.path)
+      }
       break
     case 'mouseenter':
       documentStore.setMouseEndCell(props.path)

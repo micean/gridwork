@@ -33,7 +33,6 @@ gridwork/
 │   │   ├── data.ts                 # 数据操作工具
 │   │   ├── clipboard.ts            # 剪贴板操作
 │   │   ├── edit.ts                 # 编辑相关工具
-│   │   ├── keys.ts                 # 键盘事件处理
 │   │   ├── bus.ts                  # 事件总线
 │   │   ├── db.ts                   # IndexedDB数据库管理
 │   │   └── db.example.ts           # 数据库使用示例

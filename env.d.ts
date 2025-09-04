@@ -4,6 +4,7 @@ export interface CellData {
   id: string
   text: string
   fontSize?: number
+  fontBold?: number
   fontItalic?: boolean
   fontThrough?: boolean
   fontUnderline?: boolean

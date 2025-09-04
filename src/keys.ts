@@ -41,6 +41,20 @@ export const registerKeys = () => {
   Mousetrap.bind('right', () => {
     documentStore.focusAnotherCell('right')
   })
+  
+  // Shift+方向键选择范围
+  Mousetrap.bind('shift+up', () => {
+    documentStore.handleShiftArrow('up')
+  })
+  Mousetrap.bind('shift+down', () => {
+    documentStore.handleShiftArrow('down')
+  })
+  Mousetrap.bind('shift+left', () => {
+    documentStore.handleShiftArrow('left')
+  })
+  Mousetrap.bind('shift+right', () => {
+    documentStore.handleShiftArrow('right')
+  })
   Mousetrap.bind(['del', 'backspace'], () => {
     if(modeStore.readonly) return
     documentStore.selectedCells.forEach((path) => {
