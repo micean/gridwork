@@ -41,7 +41,7 @@ export const registerKeys = () => {
   Mousetrap.bind('right', () => {
     documentStore.focusAnotherCell('right')
   })
-  
+
   // Shift+方向键选择范围
   Mousetrap.bind('shift+up', () => {
     documentStore.handleShiftArrow('up')
@@ -144,7 +144,7 @@ export const wheelEventListener = (event: WheelEvent) => {
       // 滚轮后滚 - 缩小
       documentStore.zoomOut()
     }
-  } else if (event.shiftKey && !modeStore.readonly && documentStore.selectedCells.length > 0) {
+  } else if (event.altKey && !modeStore.readonly && documentStore.selectedCells.length > 0) {
     // Shift+滚轮调整字体大小
     event.preventDefault() // 阻止默认的滚动行为
     event.stopPropagation() // 阻止事件冒泡
