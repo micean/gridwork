@@ -24,6 +24,27 @@
     }
   }
 
+  td.bd-left-preview{
+    border-left-width: 3px !important;
+    border-left-style: dashed !important;
+    border-left-color: red !important;
+  }
+  td.bd-right-preview{
+    border-right-width: 3px !important;
+    border-right-style: dashed !important;
+    border-right-color: red !important;
+  }
+  td.bd-top-preview{
+    border-top-width: 3px !important;
+    border-top-style: dashed !important;
+    border-top-color: red !important;
+  }
+  td.bd-bottom-preview{
+    border-bottom-width: 3px !important;
+    border-bottom-style: dashed !important;
+    border-bottom-color: red !important;
+  }
+
   .adaptive-table{
     box-shadow: 3px 3px 0px #333;
   }

@@ -225,7 +225,7 @@ export const parseGrid = (html: string | HTMLElement): CellData[][] | undefined 
         const fontUnderline = elem.style.textDecoration?.includes('underline') || undefined
         const backgroundColor = elem.style.backgroundColor || undefined
         const innerGrid = innerTableElem ? parseGrid(innerTableElem as HTMLElement) : undefined
-        return { id, text, fontSize, fontBold, fontItalic, fontThrough, fontUnderline, backgroundColor, innerGrid }
+        return { id, text, fontSize, fontBold, fontItalic, fontThrough, fontUnderline, backgroundColor, innerGrid } as CellData
       })
     return cells
   })

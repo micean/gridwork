@@ -1,6 +1,12 @@
 <template>
   <div class="toolbar">
-    <i title="向上增加一行" @click="addRowCol('top')" :class="{ disabled: !canAddRowCol }">
+    <i
+      title="向上增加一行"
+      @click="addRowCol('top')"
+      @mouseenter="setPreviewBorder('row', 'top')"
+      @mouseleave="clearPreviewBorder"
+      :class="{ disabled: !canAddRowCol }"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -13,7 +19,13 @@
         ></path>
       </svg>
     </i>
-    <i title="向下增加一行" @click="addRowCol('bottom')" :class="{ disabled: !canAddRowCol }">
+    <i
+      title="向下增加一行"
+      @click="addRowCol('bottom')"
+      @mouseenter="setPreviewBorder('row', 'bottom')"
+      @mouseleave="clearPreviewBorder"
+      :class="{ disabled: !canAddRowCol }"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -26,7 +38,13 @@
         ></path>
       </svg>
     </i>
-    <i title="向左增加一列" @click="addRowCol('left')" :class="{ disabled: !canAddRowCol }">
+    <i
+      title="向左增加一列"
+      @click="addRowCol('left')"
+      @mouseenter="setPreviewBorder('col', 'left')"
+      @mouseleave="clearPreviewBorder"
+      :class="{ disabled: !canAddRowCol }"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -39,7 +57,13 @@
         ></path>
       </svg>
     </i>
-    <i title="向右增加一列" @click="addRowCol('right')" :class="{ disabled: !canAddRowCol }">
+    <i
+      title="向右增加一列"
+      @click="addRowCol('right')"
+      @mouseenter="setPreviewBorder('col', 'right')"
+      @mouseleave="clearPreviewBorder"
+      :class="{ disabled: !canAddRowCol }"
+    >
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -524,7 +548,7 @@ const modeStore = useModeStore()
 const dbManager = getDBManager()
 
 const canAddRowCol = computed(() => {
-  return !modeStore.readonly && documentStore.selectedCells.length === 1
+  return !modeStore.readonly && documentStore.selectedCells.length
 })
 const hasSelection = computed(() => {
   return documentStore.selectedCells.length > 0
@@ -583,39 +607,57 @@ watch(
 )
 
 const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
-  if (modeStore.readonly) return
-  if (documentStore.selectedCells.length !== 1) return
+  if (!canAddRowCol.value) return
 
-  let originCellPath = documentStore.selectedCells[0]
-  const parts = originCellPath.split('>').map((it) => JSON.parse(it))
-  const [row, col] = parts.pop()
-  const parentGrid: CellData[][] = lookupInnerGrid(documentStore.gridData, parts)
+  const startCell = documentStore.selectedCells[0]
+  const startParts = startCell.split('>').map((it) => JSON.parse(it))
+  const [startRow, startCol] = startParts.pop()
+  const endCell = documentStore.selectedCells[documentStore.selectedCells.length - 1]
+  const endParts = endCell.split('>').map((it) => JSON.parse(it))
+  const [endRow, endCol] = endParts.pop()
+
+  const prefix = startParts.length ? startParts.join('>') + '>' : ''
+  const parentGrid: CellData[][] = startParts.length ? lookupInnerGrid(documentStore.gridData, startParts) : documentStore.gridData
+
 
   switch (edge) {
-    case 'top':
-      parentGrid.splice(row, 0, createRowData(parentGrid[0].length))
-      originCellPath = parts.length
-        ? `${parts.join('>')}>[${row + 1},${col}]`
-        : `[${row + 1},${col}]`
-      break
-    case 'bottom':
-      parentGrid.splice(row + 1, 0, createRowData(parentGrid[0].length))
-      break
-    case 'left':
-      parentGrid.forEach((eachRow) => {
-        eachRow.splice(col, 0, createCellData())
+    case 'top': {
+      parentGrid.splice(startRow, 0, createRowData(parentGrid[0].length))
+      const newCells = documentStore.selectedCells.map((cell) => {
+        const parts = cell
+          .split('>')
+          .map((it) => JSON.parse(it))
+          .map(([row, col]) => `${prefix}[${row + 1},${col}]`)
+        return parts.join('>')
       })
-      originCellPath = parts.length
-        ? `${parts.join('>')}>[${row},${col + 1}]`
-        : `[${row},${col + 1}]`
+      documentStore.setSelectedCells(newCells)
       break
-    case 'right':
+    }
+    case 'bottom': {
+      parentGrid.splice(endRow + 1, 0, createRowData(parentGrid[0].length))
+      break
+    }
+    case 'left': {
       parentGrid.forEach((eachRow) => {
-        eachRow.splice(col + 1, 0, createCellData())
+        eachRow.splice(startCol, 0, createCellData())
+      })
+      const newCells = documentStore.selectedCells.map((cell) => {
+        const parts = cell
+          .split('>')
+          .map((it) => JSON.parse(it))
+          .map(([row, col]) => `${prefix}[${row},${col + 1}]`)
+        return parts.join('>')
+      })
+      documentStore.setSelectedCells(newCells)
+      break
+    }
+    case 'right': {
+      parentGrid.forEach((eachRow) => {
+        eachRow.splice(endCol + 1, 0, createCellData())
       })
       break
+    }
   }
-  documentStore.addCellOnClick(originCellPath)
 }
 
 const removeRowCol = (type: 'row' | 'col') => {
@@ -937,6 +979,16 @@ const findMatchingCells = (searchTerm: string): string[] => {
 
 const escapeRegExp = (string: string): string => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+}
+
+const setPreviewBorder = (type: 'row' | 'col', position: 'top' | 'bottom' | 'left' | 'right') => {
+  if (!canAddRowCol.value) return
+  documentStore.setPreviewBorders(type, position)
+}
+
+const clearPreviewBorder = () => {
+  if (!canAddRowCol.value) return
+  documentStore.setPreviewBorders(null, null)
 }
 
 const copyShareLink = async () => {

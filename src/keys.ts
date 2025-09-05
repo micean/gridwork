@@ -4,7 +4,6 @@ import { useHistoryStore } from '@/stores/history.ts'
 import emitter from '@/utils/bus.ts'
 import { lookupCellData, changeGridFontSize } from '@/utils/data.ts'
 import { getDBManager } from '@/utils/db.ts'
-import type {Store} from "pinia";
 import type { CellData } from '../env'
 import {useModeStore} from "@/stores/mode.ts";
 

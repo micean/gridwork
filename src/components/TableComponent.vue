@@ -2,11 +2,13 @@
 import CellContent from './CellContent.vue';
 import {computed} from "vue";
 import type {CellData} from "../../env";
+import { useDocumentStore } from '@/stores/document.ts'
 
 const props = defineProps<{
   parentPath?: string,
 }>()
 const model = defineModel<CellData[][]>({ required: true })
+const documentStore = useDocumentStore()
 
 const rows = computed(() => model.value.length);
 const cols = computed(() => model.value[0]?.length || 0);
@@ -18,7 +20,13 @@ const cols = computed(() => model.value[0]?.length || 0);
   <table class="adaptive-table">
     <tbody>
     <tr v-for="row in rows" :key="row">
-      <td v-for="col in cols" :key="col" class="table-cell" >
+      <td v-for="col in cols" :key="col" :class="{
+        'table-cell': true,
+        'bd-left-preview': documentStore.isPreviewBorder(`${props.parentPath ? props.parentPath + '>' : ''}[${row - 1},${col - 1}]`, 'left'),
+        'bd-right-preview': documentStore.isPreviewBorder(`${props.parentPath ? props.parentPath + '>' : ''}[${row - 1},${col - 1}]`, 'right'),
+        'bd-top-preview': documentStore.isPreviewBorder(`${props.parentPath ? props.parentPath + '>' : ''}[${row - 1},${col - 1}]`, 'top'),
+        'bd-bottom-preview': documentStore.isPreviewBorder(`${props.parentPath ? props.parentPath + '>' : ''}[${row - 1},${col - 1}]`, 'bottom'),
+      }" >
         <CellContent
           :key="model[row - 1][col - 1].id"
           v-model="model[row - 1][col - 1]"

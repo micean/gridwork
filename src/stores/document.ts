@@ -1,3 +1,4 @@
+
 import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import emitter from "@/utils/bus.ts";
@@ -61,12 +62,20 @@ export const useDocumentStore = defineStore('document', () => {
     oldSelectedCells?: string[]
   }>({})
   const lastClickedCell = ref<string | null>(null)
+  const previewBorders = ref<{
+    position: 'top' | 'bottom' | 'left' | 'right' | null
+    targetCells: string[]
+  }[]>([])
 
   const loadDoc = (doc: DocumentData) => {
     id.value = doc.id
     title.value = doc.name
     createdAt.value = doc.createdAt
     setupGrid(doc.gridData)
+  }
+
+  const isZoomed = () => {
+    return originalGridData.value.length > 0 && zoomScalePath.value.length > 0
   }
 
   const setupGrid = (data: CellData[][]) => {
@@ -94,10 +103,11 @@ export const useDocumentStore = defineStore('document', () => {
   const getDocument = (): DocumentData => {
     return {
       id: id.value,
+
       name: title.value,
       gridData: JSON.parse(JSON.stringify(isZoomed() ? originalGridData.value : gridData.value)),
       createdAt: createdAt.value,
-      updatedAt: new Date().toUTCString(),
+      updatedAt: new Date().toUTCString()
     }
   }
 
@@ -122,8 +132,7 @@ export const useDocumentStore = defineStore('document', () => {
     if (isCellSelected(cell) && selectedCells.value.length === 1) {
       return
     }
-    selectedCells.value.splice(0, selectedCells.value.length)
-    selectedCells.value.push(cell)
+    setSelectedCells([cell])
   }
 
   const removeSelectedCell = (cell: string) => {
@@ -139,10 +148,6 @@ export const useDocumentStore = defineStore('document', () => {
     } else {
       addCellOnClick(cell)
     }
-  }
-
-  const isZoomed = () => {
-    return originalGridData.value.length > 0 && zoomScalePath.value.length > 0
   }
 
   const zoomIn = () => {
@@ -232,6 +237,7 @@ export const useDocumentStore = defineStore('document', () => {
     const [row, col] = JSON.parse(parts.pop()!)
     const prefix = parts.length ? parts.join('>') + '>' : ''
     switch(pos) {
+
       case 'top':
         return !isCellSelected(prefix + `[${row - 1},${col}]`)
       case 'bottom':
@@ -246,7 +252,8 @@ export const useDocumentStore = defineStore('document', () => {
   const getSelectedCells = () => selectedCells.value
 
   const setSelectedCells = (cells: string[]) => {
-    selectedCells.value = cells
+    selectedCells.value.splice(0, selectedCells.value.length)
+    selectedCells.value.push(...cells)
   }
 
   const startEdit = () => {
@@ -330,7 +337,9 @@ export const useDocumentStore = defineStore('document', () => {
     const posArr: [number, number][] = selectedCells.value
       .map(it => it.split('>').pop()!)
       .map(it => JSON.parse(it) as [number, number])
-    const rowSize = posArr.map(it => it[0]).filter((e, i, self) => i === self.indexOf(e)).length;
+    const rowSize = posArr.map(it => it
+
+      [0]).filter((e, i, self) => i === self.indexOf(e)).length;
     const colSize = posArr.map(it => it[1]).filter((e, i, self) => i === self.indexOf(e)).length;
     return [rowSize, colSize]
   }
@@ -377,7 +386,7 @@ export const useDocumentStore = defineStore('document', () => {
 
     // 获取当前选择范围的边界
     const startCell = lastClickedCell.value
-    
+
     // 计算当前选择矩形的真正对角点
     let currentEndCell: string
     if (selectedCells.value.length === 1) {
@@ -388,7 +397,7 @@ export const useDocumentStore = defineStore('document', () => {
       const startParts = startCell.split('>')
       const [startRow, startCol] = JSON.parse(startParts[startParts.length - 1])
       const prefix = startParts.slice(0, -1).length ? startParts.slice(0, -1).join('>') + '>' : ''
-      
+
       // 找到选择范围中的最大和最小坐标
       let minRow = startRow, maxRow = startRow, minCol = startCol, maxCol = startCol
       selectedCells.value.forEach(cell => {
@@ -399,7 +408,7 @@ export const useDocumentStore = defineStore('document', () => {
         minCol = Math.min(minCol, col)
         maxCol = Math.max(maxCol, col)
       })
-      
+
       // 对角点是距离起始点最远的点
       const endRow = startRow === minRow ? maxRow : minRow
       const endCol = startCol === minCol ? maxCol : minCol
@@ -431,13 +440,116 @@ export const useDocumentStore = defineStore('document', () => {
         newEndCell = `${prefix}[${endRow},${Math.max(0, endCol - 1)}]`
         break
       case 'right':
-        const maxCol = innerGrid[0]?.length ? innerGrid[0].length - 1 : 0
+        const maxCol =
+
+        innerGrid[0]?.length ? innerGrid[0].length - 1 : 0
         newEndCell = `${prefix}[${endRow},${Math.min(maxCol, endCol + 1)}]`
         break
     }
 
     // 使用 thoughtCells 计算新的选择范围
     selectedCells.value = thoughtCells(startCell, newEndCell)
+  }
+
+  const setPreviewBorders = (type: 'row' | 'col' | null, position: 'top' | 'bottom' | 'left' | 'right' | null) => {
+    if (!type || !position) {
+      previewBorders.value = []
+      return
+    }
+
+    if (!selectedCells.value.length) {
+      previewBorders.value =[]
+      return
+    }
+
+    const startSelectedCell = selectedCells.value[0]
+    const startParts = startSelectedCell.split('>')
+    const [startRow, startCol] = JSON.parse(startParts.pop()!)
+
+    const endSelectedCell = selectedCells.value[selectedCells.value.length - 1]
+    const endParts = endSelectedCell.split('>')
+    const [endRow, endCol] = JSON.parse(endParts.pop()!)
+
+    const prefix = startParts.length ? startParts.join('>') + '>' : ''
+
+    const targetCells1: string[] = []
+    const targetCells2: string[] = []
+    const grid = endParts.length ? lookupInnerGrid(gridData.value, startParts.join('>')) : gridData.value
+
+    switch (type) {
+      case 'row':
+        if (position === 'top') {
+          // 高亮当前行的顶部边框和上一行(如果存在)的底部边框
+          for (let c = 0; c < grid[0].length; c++) {
+            targetCells1.push(`${prefix}[${startRow},${c}]`)
+          }
+          previewBorders.value.push({ position: 'top', targetCells: targetCells1 })
+          if(startRow > 0){
+            for (let c = 0; c < grid[0].length; c++) {
+              targetCells2.push(`${prefix}[${startRow - 1},${c}]`)
+            }
+            previewBorders.value.push({ position: 'bottom', targetCells: targetCells2 })
+          }
+        } else if (position === 'bottom') {
+          // 高亮当前行的底部边框和下一行(如果存在)的顶部边框
+          for (let c = 0; c < grid[0].length; c++) {
+            targetCells1.push(`${prefix}[${endRow},${c}]`)
+          }
+          previewBorders.value.push({ position: 'bottom', targetCells: targetCells1 })
+          if(endRow < grid.length - 1){
+            for (let c = 0; c < grid[0].length; c++) {
+              targetCells2.push(`${prefix}[${endRow + 1},${c}]`)
+            }
+            previewBorders.value.push({ position: 'top', targetCells: targetCells2 })
+          }
+        }
+        break
+      case 'col':
+        if (position === 'left') {
+          // 高亮当前列的左侧边框和前一行(如果存在)的右侧边框
+          for (let r = 0; r < grid.length; r++) {
+            targetCells1.push(`${prefix}[${r},${startCol}]`)
+          }
+          previewBorders.value.push({ position: 'left', targetCells: targetCells1 })
+          if(startCol > 0){
+            for (let r = 0; r < grid.length; r++) {
+              targetCells2.push(`${prefix}[${r},${startCol - 1}]`)
+            }
+            previewBorders.value.push({ position: 'right', targetCells: targetCells2 })
+          }
+        } else if (position === 'right') {
+          // 高亮当前列的右侧边框和后一行(如果存在)的左侧边框
+          for (let r = 0; r < grid.length; r++) {
+            targetCells1.push(`${prefix}[${r},${endCol}]`)
+          }
+          previewBorders.value.push({ position: 'right', targetCells: targetCells1 })
+          if(endCol < grid[0].length - 1){
+            for (let r = 0; r < grid.length; r++) {
+              targetCells2.push(`${prefix}[${r},${endCol + 1}]`)
+            }
+            previewBorders.value.push({ position: 'left', targetCells: targetCells2 })
+          }
+        }
+        break
+    }
+    console.log(JSON.stringify(previewBorders.value))
+  }
+
+  const isPreviewBorder = (cell: string, border: 'top' | 'bottom' | 'left' | 'right'): boolean => {
+    if (!previewBorders.value.length) return false
+
+    // 根据操作类型和位置返回对应的边框
+    for (let i = 0; i < previewBorders.value.length; i++) {
+      const previewBorder = previewBorders.value[i];
+      if(previewBorder.position !== border){
+        continue;
+      }
+      if(!previewBorder.targetCells.includes(cell)){
+        continue;
+      }
+      return true;
+    }
+    return false;
   }
 
   return {
@@ -450,6 +562,7 @@ export const useDocumentStore = defineStore('document', () => {
     editingCell,
     mouseCells,
     lastClickedCell,
+    previewBorders,
     loadDoc,
     setupGrid,
     updateDocumentName,
@@ -478,5 +591,8 @@ export const useDocumentStore = defineStore('document', () => {
     areCellsOnSameLevel,
     handleShiftClick,
     handleShiftArrow,
+    setPreviewBorders,
+    isPreviewBorder
   }
 })
+
