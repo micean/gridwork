@@ -3,8 +3,8 @@
     <i
       title="向上增加一行"
       @click="addRowCol('top')"
-      @mouseenter="setPreviewBorder('row', 'top')"
-      @mouseleave="clearPreviewBorder"
+      @mouseenter="setAddPreviewBorder('row', 'top')"
+      @mouseleave="clearAddPreviewBorder"
       :class="{ disabled: !canAddRowCol }"
     >
       <svg
@@ -22,8 +22,8 @@
     <i
       title="向下增加一行"
       @click="addRowCol('bottom')"
-      @mouseenter="setPreviewBorder('row', 'bottom')"
-      @mouseleave="clearPreviewBorder"
+      @mouseenter="setAddPreviewBorder('row', 'bottom')"
+      @mouseleave="clearAddPreviewBorder"
       :class="{ disabled: !canAddRowCol }"
     >
       <svg
@@ -41,8 +41,8 @@
     <i
       title="向左增加一列"
       @click="addRowCol('left')"
-      @mouseenter="setPreviewBorder('col', 'left')"
-      @mouseleave="clearPreviewBorder"
+      @mouseenter="setAddPreviewBorder('col', 'left')"
+      @mouseleave="clearAddPreviewBorder"
       :class="{ disabled: !canAddRowCol }"
     >
       <svg
@@ -60,8 +60,8 @@
     <i
       title="向右增加一列"
       @click="addRowCol('right')"
-      @mouseenter="setPreviewBorder('col', 'right')"
-      @mouseleave="clearPreviewBorder"
+      @mouseenter="setAddPreviewBorder('col', 'right')"
+      @mouseleave="clearAddPreviewBorder"
       :class="{ disabled: !canAddRowCol }"
     >
       <svg
@@ -79,6 +79,8 @@
     <i
       title="删除行"
       @click="removeRowCol('row')"
+      @mouseenter="setRemovePreviewBorder('row')"
+      @mouseleave="clearRemovePreviewBorder"
       :class="{ disabled: modeStore.readonly || !hasSelection }"
     >
       <svg
@@ -96,6 +98,8 @@
     <i
       title="删除列"
       @click="removeRowCol('col')"
+      @mouseenter="setRemovePreviewBorder('col')"
+      @mouseleave="clearRemovePreviewBorder"
       :class="{ disabled: modeStore.readonly || !hasSelection }"
     >
       <svg
@@ -709,6 +713,7 @@ const removeRowCol = (type: 'row' | 'col') => {
       }
       break
   }
+  documentStore.setRemovePreviewBorders(null)
 
   // 清除选中状态，因为删除后原位置可能不存在
   documentStore.clearSelection()
@@ -981,14 +986,24 @@ const escapeRegExp = (string: string): string => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-const setPreviewBorder = (type: 'row' | 'col', position: 'top' | 'bottom' | 'left' | 'right') => {
+const setAddPreviewBorder = (type: 'row' | 'col', position: 'top' | 'bottom' | 'left' | 'right') => {
   if (!canAddRowCol.value) return
-  documentStore.setPreviewBorders(type, position)
+  documentStore.setAddPreviewBorders(type, position)
 }
 
-const clearPreviewBorder = () => {
+const clearAddPreviewBorder = () => {
   if (!canAddRowCol.value) return
-  documentStore.setPreviewBorders(null, null)
+  documentStore.setAddPreviewBorders(null, null)
+}
+
+const setRemovePreviewBorder = (type: 'row' | 'col') => {
+  if (!documentStore.selectedCells.length) return
+  documentStore.setRemovePreviewBorders(type)
+}
+
+const clearRemovePreviewBorder = () => {
+  if (!documentStore.selectedCells.length) return
+  documentStore.setRemovePreviewBorders(null)
 }
 
 const copyShareLink = async () => {

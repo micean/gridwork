@@ -451,7 +451,7 @@ export const useDocumentStore = defineStore('document', () => {
     selectedCells.value = thoughtCells(startCell, newEndCell)
   }
 
-  const setPreviewBorders = (type: 'row' | 'col' | null, position: 'top' | 'bottom' | 'left' | 'right' | null) => {
+  const setAddPreviewBorders = (type: 'row' | 'col' | null, position: 'top' | 'bottom' | 'left' | 'right' | null) => {
     if (!type || !position) {
       previewBorders.value = []
       return
@@ -474,7 +474,7 @@ export const useDocumentStore = defineStore('document', () => {
 
     const targetCells1: string[] = []
     const targetCells2: string[] = []
-    const grid = endParts.length ? lookupInnerGrid(gridData.value, startParts.join('>')) : gridData.value
+    const grid = startParts.length ? lookupInnerGrid(gridData.value, startParts.join('>')) : gridData.value
 
     switch (type) {
       case 'row':
@@ -535,6 +535,92 @@ export const useDocumentStore = defineStore('document', () => {
     console.log(JSON.stringify(previewBorders.value))
   }
 
+  const setRemovePreviewBorders = (type: 'row' | 'col' | null) => {
+    if(!selectedCells.value.length) return;
+    if(!type){
+      previewBorders.value = [];
+      return
+    }
+
+    const startParts = selectedCells.value[0].split(">")
+    startParts.pop();
+    const innerGrid = startParts.length ? lookupInnerGrid(gridData.value, startParts.join('>')) : gridData.value
+    const prefix = startParts.length ? startParts.join(">") + ">" : "";
+
+    switch (type) {
+      case "row": {
+        const rows: number[] = selectedCells.value
+          .map(it => it.split(">"))
+          .map(cellParts => cellParts.map(it => JSON.parse(it)))
+          .map((parts: [number, number][]) => parts.pop()![0])
+          .reduce((acc, cur) => {
+            if(!acc.includes(cur)){
+              acc.push(cur)
+            }
+            return acc
+          }, [] as number[])
+          .sort((a, b) => a - b)
+        const colSize = innerGrid[0].length;
+        // 上边框
+        previewBorders.value.push({
+          position: "top",
+          targetCells:  new Array(colSize).fill(0).map((val, idx) => `${prefix}[${rows[0]},${idx}]`)
+        })
+        // 下边框
+        previewBorders.value.push({
+          position: "bottom",
+          targetCells:  new Array(colSize).fill(0).map((val, idx) => `${prefix}[${rows[rows.length - 1]},${idx}]`)
+        })
+        // 左边框
+        previewBorders.value.push({
+          position: "left",
+          targetCells:  rows.map((row) => `${prefix}[${row},0]`)
+        })
+        // 右边框
+        previewBorders.value.push({
+          position: "right",
+          targetCells:  rows.map((row) => `${prefix}[${row},${colSize - 1}]`)
+        })
+        break;
+      }
+      case "col": {
+        const cols:number[] = selectedCells.value
+          .map(it => it.split(">"))
+          .map(cellParts => cellParts.map(it => JSON.parse(it)))
+          .map((parts: [number, number][]) => parts.pop()![1])
+          .reduce((acc, cur) => {
+            if(!acc.includes(cur)){
+              acc.push(cur)
+            }
+            return acc
+          }, [] as number[])
+          .sort((a, b) => a - b)
+        const rowSize = innerGrid.length;
+        // 上边框
+        previewBorders.value.push({
+          position: "top",
+          targetCells:  cols.map((col) => `${prefix}[0,${col}]`)
+        })
+        // 下边框
+        previewBorders.value.push({
+          position: "bottom",
+          targetCells:  cols.map((col) => `${prefix}[${rowSize - 1},${col}]`)
+        })
+        // 左边框
+        previewBorders.value.push({
+          position: 'left',
+          targetCells: new Array(rowSize).fill(0).map((val, idx) => `${prefix}[${idx},${cols[0]}]`),
+        })
+        // 右边框
+        previewBorders.value.push({
+          position: "right",
+          targetCells:  new Array(rowSize).fill(0).map((val, idx) => `${prefix}[${idx},${cols[cols.length - 1]}]`)
+        })
+        break;
+      }
+    }
+  }
+
   const isPreviewBorder = (cell: string, border: 'top' | 'bottom' | 'left' | 'right'): boolean => {
     if (!previewBorders.value.length) return false
 
@@ -591,7 +677,8 @@ export const useDocumentStore = defineStore('document', () => {
     areCellsOnSameLevel,
     handleShiftClick,
     handleShiftArrow,
-    setPreviewBorders,
+    setAddPreviewBorders,
+    setRemovePreviewBorders,
     isPreviewBorder
   }
 })
