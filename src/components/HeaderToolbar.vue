@@ -683,7 +683,7 @@ const removeRowCol = (type: 'row' | 'col') => {
       posArr
         .map((it) => it.pos[0])
         .filter((e, i, self) => i === self.indexOf(e))
-        .sort()
+        .sort((a, b) => a - b)
         .forEach((row, index) => {
           parentGrid.splice(row - index, 1)
         })
@@ -699,7 +699,7 @@ const removeRowCol = (type: 'row' | 'col') => {
       posArr
         .map((it) => it.pos[1])
         .filter((e, i, self) => i === self.indexOf(e))
-        .sort()
+        .sort((a, b) => a - b)
         .forEach((col, index) => {
           parentGrid.forEach((row) => row.splice(col - index, 1))
         })
