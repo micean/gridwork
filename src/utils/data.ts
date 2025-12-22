@@ -24,11 +24,14 @@ export const copyCellData = (original: CellData, target: CellData) => {
   target.id = original.id
   target.text = original.text
   target.fontSize = original.fontSize
+  target.fontBold = original.fontBold
   target.fontItalic = original.fontItalic
   target.fontThrough = original.fontThrough
   target.fontUnderline = original.fontUnderline
   target.flexDirection = original.flexDirection
   target.backgroundColor = original.backgroundColor
+  target.headerFirstLine = original.headerFirstLine
+  target.fontMist = original.fontMist
   target.innerGrid = original.innerGrid
   return target
 }
@@ -130,6 +133,9 @@ export const pickGridData = (
         cell.fontThrough = undefined
         cell.fontUnderline = undefined
         cell.backgroundColor = undefined
+        cell.flexDirection = undefined
+        cell.headerFirstLine = undefined
+        cell.fontMist = undefined
       }
       return { pos, data }
     })
@@ -169,22 +175,39 @@ export const stringifyCell = (cell: CellData, noWrap = false, depth: number = 0)
 
 export const tablizeGrid = (gridData: CellData[][]): string => {
   if (!gridData.length) return ''
-  const div = document.createElement('div');
+  const div = document.createElement('div')
   const escapeHtml = (text: string): string => {
-    div.textContent = text;
-    return div.innerHTML;
+    div.textContent = text
+    return div.innerHTML
   }
 
   const rows = gridData
     .map((row) => {
       return row
-        .map(
-          (col) =>
-            `<td ${col.backgroundColor ? `style="background-color: ${col.backgroundColor}"` : ''}>
-       <code ${col.fontSize ? `style="font-size: ${col.fontSize}rem"` : ''}>${escapeHtml(col.text)}</code>
-       ${tablizeGrid(col.innerGrid || [])}
-       </td>`,
-        )
+        .map((col) => {
+          const tdClassNames = [!col.fontMist || 'mist'].filter(Boolean).join(' ');
+
+          const codeStyle: Record<string, string> = {
+            'font-size': col.fontSize ? `${col.fontSize}rem` : '',
+            'font-weight': col.fontBold ? 'bold' : '',
+            'font-style': col.fontItalic ? 'italic' : '',
+            'text-decoration': [
+              col.fontThrough ? 'line-through' : '',
+              col.fontUnderline ? 'underline' : '',
+            ]
+              .filter(Boolean)
+              .join(' '),
+          }
+          const codeStyleString = Object.keys(codeStyle)
+            .map((k) => (codeStyle[k] ? `${k}: ${codeStyle[k]}` : ''))
+            .filter(Boolean)
+            .join(';')
+
+          return `<td ${tdClassNames ? `class="${tdClassNames}"` : ''} ${col.backgroundColor ? `style="background-color: ${col.backgroundColor}"` : ''}>
+            <code ${codeStyleString ? `style="${codeStyleString}"` : ''}>${escapeHtml(col.text)}</code>
+            ${tablizeGrid(col.innerGrid || [])}
+            </td>`
+        })
         .join('')
     })
     .map((row) => {
@@ -208,24 +231,54 @@ export const parseGrid = (html: string | HTMLElement): CellData[][] | undefined 
   const grid = Array.from(rows).map((row) => {
     const tds = row.querySelectorAll(':scope>td, :scope>th')
     const cells = Array.from(tds)
-      .map((elem) => elem as HTMLElement)
-      .map((elem) => {
-        const innerTableElem = elem.querySelector(':scope>table')
-        if (innerTableElem) elem.removeChild(innerTableElem)
+      .map((elemTd) => elemTd as HTMLElement)
+      .map((elemTd) => {
+        const innerCodeElem = elemTd.querySelector(':scope>code') as HTMLElement
+        const innerTableElem = elemTd.querySelector(':scope>table') as HTMLElement
+        if (innerTableElem) elemTd.removeChild(innerTableElem)
 
         const id = nanoid()
-        const text = elem.textContent?.trim() || ''
-        const fontSize = elem.style.fontSize?.includes('rem') ? parseFloat(elem.style.fontSize.replace('rem', '')) :
-          elem.style.fontSize?.includes('em') ? parseFloat(elem.style.fontSize.replace('rem', '')) :
-          elem.style.fontSize?.includes('px') ? parseFloat(elem.style.fontSize.replace('px', '')) / 16 :
-          elem.style.fontSize?.includes('pt') ? parseFloat(elem.style.fontSize.replace('pt', '')) * 96 / 72 / 16 : undefined
-        const fontBold = elem.style.fontWeight === 'bold' || undefined
-        const fontItalic = elem.style.fontStyle === 'italic' || undefined
-        const fontThrough = elem.style.textDecoration?.includes('line-through') || undefined
-        const fontUnderline = elem.style.textDecoration?.includes('underline') || undefined
-        const backgroundColor = elem.style.backgroundColor || undefined
+        const text = elemTd.textContent?.trim() || ''
+        const fontSize = elemTd.style.fontSize?.includes('rem')
+          ? parseFloat(elemTd.style.fontSize.replace('rem', ''))
+          : elemTd.style.fontSize?.includes('em')
+            ? parseFloat(elemTd.style.fontSize.replace('rem', ''))
+            : elemTd.style.fontSize?.includes('px')
+              ? parseFloat(elemTd.style.fontSize.replace('px', '')) / 16
+              : elemTd.style.fontSize?.includes('pt')
+                ? (parseFloat(elemTd.style.fontSize.replace('pt', '')) * 96) / 72 / 16
+                : undefined
+        const fontBold =
+          elemTd.style.fontWeight === 'bold' ||
+          innerCodeElem?.style.fontWeight === 'bold' ||
+          undefined
+        const fontItalic =
+          elemTd.style.fontStyle === 'italic' ||
+          innerCodeElem?.style.fontStyle === 'italic' ||
+          undefined
+        const fontThrough =
+          elemTd.style.textDecoration?.includes('line-through') ||
+          innerCodeElem?.style.textDecoration?.includes('line-through') ||
+          undefined
+        const fontUnderline =
+          elemTd.style.textDecoration?.includes('underline') ||
+          innerCodeElem?.style.textDecoration?.includes('underline') ||
+          undefined
+        const backgroundColor = elemTd.style.backgroundColor || undefined
+        const fontMist = elemTd.classList.contains('mist') || undefined
         const innerGrid = innerTableElem ? parseGrid(innerTableElem as HTMLElement) : undefined
-        return { id, text, fontSize, fontBold, fontItalic, fontThrough, fontUnderline, backgroundColor, innerGrid } as CellData
+        return {
+          id,
+          text,
+          fontSize,
+          fontBold,
+          fontItalic,
+          fontThrough,
+          fontUnderline,
+          backgroundColor,
+          fontMist,
+          innerGrid,
+        } as CellData
       })
     return cells
   })

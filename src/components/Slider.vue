@@ -11,14 +11,14 @@
         @mouseenter="handleMouseEnter"
         @mouseleave="handleMouseLeave"
       >
-<!--        <div class="slider-tooltip" v-if="showTooltip && (isDragging || isHovering)">-->
-<!--          {{ formatValue(displayValue) }}-->
-<!--        </div>-->
+        <!--        <div class="slider-tooltip" v-if="showTooltip && (isDragging || isHovering)">-->
+        <!--          {{ formatValue(displayValue) }}-->
+        <!--        </div>-->
       </div>
     </div>
     <div class="slider-labels" v-if="showLabels">
       <span class="slider-min">min</span>
-      <span class="slider-value"> </span>
+      <span class="slider-value">{{ displayValue }}</span>
       <span class="slider-max">max</span>
     </div>
   </div>
@@ -44,7 +44,7 @@ const props = withDefaults(defineProps<Props>(), {
   disabled: false,
   showLabels: true,
   showTooltip: false,
-  format: (value: number) => value.toString()
+  format: (value: number) => value.toString(),
 })
 
 const modelValue = defineModel<number>({ default: 0 })
@@ -214,7 +214,9 @@ onUnmounted(() => {
       border-radius: 50%;
       transform: translate(-50%, -50%);
       cursor: grab;
-      transition: transform 0.2s ease, box-shadow 0.2s ease;
+      transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
       box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
 
       &:hover {

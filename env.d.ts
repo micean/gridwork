@@ -10,6 +10,8 @@ export interface CellData {
   fontUnderline?: boolean
   backgroundColor?: string
   flexDirection?: 'row' | 'column'
+  headerFirstLine?: boolean
+  fontMist?: boolean
   innerGrid?: CellData[][]
 }
 

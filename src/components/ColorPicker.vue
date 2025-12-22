@@ -1,6 +1,14 @@
 <script setup lang="ts">
-
-const backgroundColors = ['#FFFFFF', '#f9f9f0', '#F3E733', '#FF894F', '#FF8080', '#FF6196', '#38B0F1', '#75B175']
+const backgroundColors = [
+  '#ffffff',
+  '#f9f9f0',
+  '#f3e733',
+  '#ffc7c7',
+  '#ff9cbd',
+  '#9adbff',
+  '#fadaff',
+  '#b6edb6',
+]
 
 interface Emits {
   (e: 'selectColor', color: string): void

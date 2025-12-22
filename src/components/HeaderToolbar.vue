@@ -116,6 +116,21 @@
     </i>
     <div class="divider"></div>
     <i
+      title="首行标题"
+      @click="toggleHeaderFirst"
+      :class="{ disabled: modeStore.readonly || !hasSelection }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path d="M17 11V4H19V21H17V13H7V21H5V4H7V11H17Z"></path>
+      </svg>
+    </i>
+    <i
       title="插入子级"
       @click="insertChild"
       :class="{ disabled: modeStore.readonly || !hasSelection }"
@@ -146,6 +161,23 @@
       >
         <path
           d="M21 20C21 20.5523 20.5523 21 20 21H4C3.44772 21 3 20.5523 3 20V4C3 3.44772 3.44772 3 4 3H20C20.5523 3 21 3.44772 21 4V20ZM11 5H5V19H11V5ZM19 13H13V19H19V13ZM19 5H13V11H19V5Z"
+        ></path>
+      </svg>
+    </i>
+    <i
+      title="模糊"
+      @click="toggleMist"
+      :class="{ disabled: modeStore.readonly || !hasSelection }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M4 4H8V6H4V4ZM16 19H20V21H16V19ZM2 9H7V11H2V9ZM9 9H12V11H9V9ZM14 9H20V11H14V9ZM4 14H10V16H4V14ZM12 14H15V16H12V14ZM17 14H22V16H17V14ZM10 4H22V6H10V4ZM2 19H14V21H2V19Z"
         ></path>
       </svg>
     </i>
@@ -621,8 +653,9 @@ const addRowCol = (edge: 'top' | 'bottom' | 'left' | 'right') => {
   const [endRow, endCol] = endParts.pop()
 
   const prefix = startParts.length ? startParts.join('>') + '>' : ''
-  const parentGrid: CellData[][] = startParts.length ? lookupInnerGrid(documentStore.gridData, startParts) : documentStore.gridData
-
+  const parentGrid: CellData[][] = startParts.length
+    ? lookupInnerGrid(documentStore.gridData, startParts)
+    : documentStore.gridData
 
   switch (edge) {
     case 'top': {
@@ -719,6 +752,15 @@ const removeRowCol = (type: 'row' | 'col') => {
   documentStore.clearSelection()
 }
 
+const toggleHeaderFirst = () => {
+  if (modeStore.readonly) return
+  if (!documentStore.selectedCells.length) return
+  documentStore.selectedCells.forEach((it) => {
+    const cell = lookupCellData(documentStore.gridData, it)!
+    cell.headerFirstLine = cell.headerFirstLine ? undefined : true
+  })
+}
+
 const insertChild = () => {
   if (modeStore.readonly) return
   if (!documentStore.selectedCells.length) return
@@ -738,6 +780,15 @@ const toggleLayout = () => {
   documentStore.selectedCells.forEach((it) => {
     const cell = lookupCellData(documentStore.gridData, it)!
     cell.flexDirection = !cell.flexDirection || cell.flexDirection === 'column' ? 'row' : 'column'
+  })
+}
+
+const toggleMist = () => {
+  if (modeStore.readonly) return
+  if (!documentStore.selectedCells.length) return
+  documentStore.selectedCells.forEach((it) => {
+    const cell = lookupCellData(documentStore.gridData, it)!
+    cell.fontMist = cell.fontMist ? undefined : true
   })
 }
 
@@ -986,7 +1037,10 @@ const escapeRegExp = (string: string): string => {
   return string.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
 }
 
-const setAddPreviewBorder = (type: 'row' | 'col', position: 'top' | 'bottom' | 'left' | 'right') => {
+const setAddPreviewBorder = (
+  type: 'row' | 'col',
+  position: 'top' | 'bottom' | 'left' | 'right',
+) => {
   if (!canAddRowCol.value) return
   documentStore.setAddPreviewBorders(type, position)
 }

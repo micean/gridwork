@@ -242,6 +242,7 @@ const handleMouse = (event: Event, type: string) => {
     :id="model.id"
     :class="{
       'cell-content': true,
+      'cell-mist': model.fontMist,
       untouchable,
       focus: isCellSelected,
       'hide-content': sizeNumber <= 2,
@@ -255,6 +256,7 @@ const handleMouse = (event: Event, type: string) => {
         (searchStore.isSearchVisible && searchStore.highlight(model.text || '')) || isEditing
           ? 'white'
           : model.backgroundColor,
+      'text-shadow': (searchStore.isSearchVisible && searchStore.highlight(model.text || '')) ? 'none' : undefined,
       'flex-direction': model.flexDirection,
       'align-items': model.flexDirection === 'row' ? 'center' : undefined,
     }"
@@ -264,7 +266,13 @@ const handleMouse = (event: Event, type: string) => {
     <code
       ref="cellInput"
       v-show="sizeNumber > 2"
-      :class="['cell-input', { editing: isEditing }]"
+      :class="[
+        'cell-input',
+        {
+          editing: isEditing,
+          'cell-header-first': model.headerFirstLine,
+        },
+      ]"
       :contenteditable="!modeStore.readonly && isCellSelected"
       :style="{
         'font-size': model.fontSize ? model.fontSize + 'rem' : '0.8rem',
