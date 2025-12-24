@@ -164,11 +164,7 @@
         ></path>
       </svg>
     </i>
-    <i
-      title="模糊"
-      @click="toggleMist"
-      :class="{ disabled: modeStore.readonly || !hasSelection }"
-    >
+    <i title="模糊" @click="toggleMist" :class="{ disabled: modeStore.readonly || !hasSelection }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
         viewBox="0 0 24 24"
@@ -436,6 +432,44 @@
         ></path>
       </svg>
     </i>
+    <i
+      title="保存到本地"
+      @click="handleSaveAs"
+      :class="{
+        disabled: !supportedFileSystemApi || modeStore.readonly || documentStore.isZoomed(),
+      }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M22 4C22 3.44772 21.5523 3 21 3H3C2.44772 3 2 3.44772 2 4V20C2 20.5523 2.44772 21 3 21H21C21.5523 21 22 20.5523 22 20V4ZM4 15H7.41604C8.1876 16.7659 9.94968 18 12 18C14.0503 18 15.8124 16.7659 16.584 15H20V19H4V15ZM4 5H20V13H15C15 14.6569 13.6569 16 12 16C10.3431 16 9 14.6569 9 13H4V5ZM16 9H13V6H11V9H8L12 13.5L16 9Z"
+        ></path>
+      </svg>
+    </i>
+    <i
+      title="打开文件"
+      @click="handleOpenFile"
+      :class="{
+        disabled: !supportedFileSystemApi || modeStore.readonly || documentStore.isZoomed(),
+      }"
+    >
+      <svg
+        xmlns="http://www.w3.org/2000/svg"
+        viewBox="0 0 24 24"
+        width="20"
+        height="20"
+        fill="currentColor"
+      >
+        <path
+          d="M3 21C2.44772 21 2 20.5523 2 20V4C2 3.44772 2.44772 3 3 3H10.4142L12.4142 5H20C20.5523 5 21 5.44772 21 6V9H19V7H11.5858L9.58579 5H4V16.998L5.5 11H22.5L20.1894 20.2425C20.0781 20.6877 19.6781 21 19.2192 21H3ZM19.9384 13H7.06155L5.56155 19H18.4384L19.9384 13Z"
+        ></path>
+      </svg>
+    </i>
     <i title="求和" @click="handleSummation" :class="{ disabled: !summable }">
       <svg
         xmlns="http://www.w3.org/2000/svg"
@@ -536,7 +570,7 @@ import ColorPicker from './ColorPicker.vue'
 import SwitchButton from './SwitchButton.vue'
 import { computed, nextTick, ref, watch } from 'vue'
 import { useDocumentStore } from '@/stores/document.ts'
-import type { CellData } from '../../env'
+import type { CellData, DocumentData } from '../../env'
 import {
   createCellData,
   createRowData,
@@ -565,6 +599,10 @@ defineExpose({
   },
 })
 
+const emit = defineEmits<{
+  documentLoaded: [document: DocumentData]
+}>()
+
 const vars = ref({
   fontSize: 0.8,
   showFontSizePopup: false,
@@ -583,6 +621,9 @@ const modeStore = useModeStore()
 
 const dbManager = getDBManager()
 
+const supportedFileSystemApi = computed(() => {
+  return 'showOpenFilePicker' in self
+})
 const canAddRowCol = computed(() => {
   return !modeStore.readonly && documentStore.selectedCells.length
 })
@@ -885,6 +926,117 @@ const handleSave = async () => {
   await documentStore.saveDocument(dbManager)
 }
 
+const handleSaveAs = async () => {
+  if (modeStore.readonly || documentStore.isZoomed()) return
+
+  try {
+    // 检查是否支持File System Access API
+    if (!supportedFileSystemApi.value) {
+      alert('您的浏览器不支持保存到本地目录功能，请使用Chrome或Edge浏览器')
+      return
+    }
+
+    // 获取文档数据
+    const documentData = documentStore.getDocument()
+    const jsonData = JSON.stringify(documentData, null, 2)
+
+    // 让用户选择保存目录
+    const dirHandle = await window.showDirectoryPicker({
+      mode: 'readwrite',
+    })
+
+    // 创建文件名（基于文档标题和时间戳）
+    const fileName = `${documentData.name || '无标题文档'}.json`
+
+    // 在选定的目录中创建文件
+    const fileHandle = await dirHandle.getFileHandle(fileName, {
+      create: true,
+    })
+
+    // 写入文件内容
+    const writable = await fileHandle.createWritable()
+    await writable.write(jsonData)
+    await writable.close()
+
+    console.log(`文档已成功保存到本地: ${fileName}`)
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      // 用户取消了保存操作
+      console.log('用户取消了保存操作')
+    } else {
+      console.error('保存到本地失败:', error)
+      alert('保存到本地失败，请重试')
+    }
+  }
+}
+
+const handleOpenFile = async () => {
+  if (modeStore.readonly || documentStore.isZoomed()) return
+
+  // 检查是否支持File System Access API
+  if (!supportedFileSystemApi.value) {
+    alert('您的浏览器不支持保存到本地目录功能，请使用Chrome或Edge浏览器')
+    return
+  }
+
+  try {
+    // 让用户选择要打开的文件
+    const fileHandles = await window.showOpenFilePicker({
+      types: [
+        {
+          description: 'JSON文件',
+          accept: {
+            'application/json': ['.json'],
+          },
+        },
+      ],
+      multiple: false,
+    })
+
+    // 获取选中的文件
+    const fileHandle = fileHandles[0]
+    const file = await fileHandle.getFile()
+
+    // 读取文件内容
+    const fileContent = await file.text()
+
+    // 解析JSON数据
+    let documentData
+    try {
+      documentData = JSON.parse(fileContent)
+    } catch (error) {
+      console.error('JSON解析失败:', error)
+      alert('文件格式不正确，请选择有效的JSON文件')
+      return
+    }
+
+    // 验证文档数据格式
+    if (!documentData || !documentData.gridData) {
+      alert('文件格式不正确，缺少必要的文档数据')
+      return
+    }
+
+    // 确认是否要加载新文档（会覆盖当前未保存的更改）
+    const confirmLoad = confirm('打开文件将替换当前文档内容，确定要继续吗？')
+    if (!confirmLoad) {
+      return
+    }
+
+    // 触发文档加载完成事件
+    emit('documentLoaded', documentData)
+
+    console.log('文档已成功加载:', file.name)
+  } catch (error) {
+    if (error instanceof Error && error.name === 'AbortError') {
+      // 用户取消了打开操作
+      console.log('用户取消了打开操作')
+    } else {
+      console.error('打开文件失败:', error)
+      alert('打开文件失败，请重试')
+    }
+  }
+}
+
 const handleSummation = () => {
   if (modeStore.readonly) return
   if (!summable.value) return
@@ -893,7 +1045,7 @@ const handleSummation = () => {
   const lastCell = cells.pop()!
   const sum = cells
     .map((it) => it.text)
-    .filter((it) => !it || /^\-?\d+(\.\d+)?$/.test(it))
+    .filter((it) => !it || /^-?\d+(\.\d+)?$/.test(it))
     .map((it) => Number(it || 0))
     .reduce((a, b) => a + b, 0)
   lastCell.text = sum.toString()

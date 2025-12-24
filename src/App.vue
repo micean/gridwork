@@ -9,6 +9,7 @@ import { useHistoryStore } from '@/stores/history.ts'
 import { usePeerStore } from '@/stores/peer.ts'
 import { createDBManager, DOCUMENTS_STORE } from '@/utils/db.ts'
 import type { DocumentData } from '../env'
+import emitter from '@/utils/bus.ts'
 import { copyEventListener, cutEventListener, pasteEventListener } from '@/utils/clipboard.ts'
 import { preventBrowserZoom, wheelEventListener } from '@/keys.ts'
 import type { DataMessage } from '@/utils/peer.ts'
@@ -108,6 +109,22 @@ const handleCreateDocument = async (document: DocumentData) => {
     modeStore.setReadonly(false)
   } catch (error) {
     console.error('create document failed:', error)
+  } finally {
+    vars.value.isLoading = false
+  }
+}
+
+const handleDocumentLoaded = (document: DocumentData) => {
+  try {
+    vars.value.isLoading = true
+    documentStore.loadDoc(document)
+    historyStore.initialize(JSON.stringify(document.gridData))
+    vars.value.documentName = document.name
+    if (document.id) currentDocumentId.value = document.id
+    modeStore.setReadonly(false)
+  } catch (error) {
+    console.error('load document failed:', error)
+    throw error
   } finally {
     vars.value.isLoading = false
   }
@@ -307,7 +324,7 @@ onUnmounted(() => {
           </div>
         </div>
         <div class="header-right">
-          <HeaderToolbar ref="toolBar" />
+          <HeaderToolbar ref="toolBar" @document-loaded="handleDocumentLoaded" />
         </div>
       </header>
 
